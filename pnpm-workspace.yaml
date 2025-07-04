@@ -1,9 +1,0 @@
-<<<<<<< HEAD
-packages:
-  - "apps/*" 
-=======
-ignoredBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - electron
-  - esbuild
->>>>>>> clean_main

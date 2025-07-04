@@ -45,7 +45,7 @@ jobs:
         uses: samuelmeuli/action-electron-builder@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          args: ${{ matrix.os == 'windows-latest' && '--win nsis --x64 --publish always' || '--mac --x64 --arm64 dmg --publish always' }}
+          args: ${{ matrix.os == 'windows-latest' && 'nsis --x64 --publish always' || 'dmg --x64 --arm64 --publish always' }}
 
       - name: Upload des artefacts (facultatif)
         if: always()

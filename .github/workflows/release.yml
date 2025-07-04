@@ -45,6 +45,7 @@ jobs:
         run: npm ci
 
       - name: Vérifier les variables d'environnement Supabase
+        shell: bash
         run: |
           if [[ "$VITE_SUPABASE_URL" == VITE_SUPABASE_URL* ]]; then
             echo "::error title=Secret VITE_SUPABASE_URL mal configuré::La valeur du secret ne doit pas commencer par 'VITE_SUPABASE_URL='."

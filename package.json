@@ -111,22 +111,6 @@
     "asarUnpack": [
       "dist/renderer/**/*"
     ],
-    "extraResources": [
-      {
-        "from": "platform-tools-latest-windows (4)/platform-tools",
-        "to": "platform-tools",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "platform-tools-latest-darwin (2)/platform-tools",
-        "to": "platform-tools",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
     "mac": {
       "icon": "build/icon.icns",
       "target": [
@@ -135,6 +119,15 @@
           "arch": [
             "x64",
             "arm64"
+          ]
+        }
+      ],
+      "extraResources": [
+        {
+          "from": "platform-tools-latest-darwin (2)/platform-tools",
+          "to": "platform-tools",
+          "filter": [
+            "**/*"
           ]
         }
       ]
@@ -146,6 +139,15 @@
           "target": "nsis",
           "arch": [
             "x64"
+          ]
+        }
+      ],
+      "extraResources": [
+        {
+          "from": "platform-tools-latest-windows (4)/platform-tools",
+          "to": "platform-tools",
+          "filter": [
+            "**/*"
           ]
         }
       ],

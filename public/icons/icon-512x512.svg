@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Arrière-plan avec dégradé -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0A84FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0060DF;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.3)"/>
+    </filter>
+  </defs>
+  
+  <!-- Arrière-plan arrondi -->
+  <rect width="512" height="512" rx="102.4" ry="102.4" fill="url(#bgGradient)" filter="url(#shadow)"/>
+  
+  <!-- Icône téléphone stylisée -->
+  <g transform="translate(256, 256)">
+    <!-- Corps du téléphone -->
+    <rect x="-53.76" y="-89.6" width="107.52" height="179.2" 
+          rx="17.919999999999998" ry="17.919999999999998" fill="#EAEAEA" opacity="0.9"/>
+    
+    <!-- Écran -->
+    <rect x="-43.007999999999996" y="-71.67999999999999" width="86.01599999999999" height="125.43999999999998" 
+          rx="7.167999999999999" ry="7.167999999999999" fill="#0A0A0A" opacity="0.8"/>
+    
+    <!-- Bouton home -->
+    <circle cx="0" cy="71.67999999999999" r="10.751999999999999" fill="#EAEAEA" opacity="0.7"/>
+    
+    <!-- Ondes de signal -->
+    <g opacity="0.6">
+      <path d="M 89.6 -35.839999999999996 Q 125.43999999999998 -71.67999999999999 89.6 -107.52" 
+            stroke="#EAEAEA" stroke-width="7.167999999999999" fill="none"/>
+      <path d="M 107.52 -17.919999999999998 Q 161.28 -71.67999999999999 107.52 -125.43999999999998" 
+            stroke="#EAEAEA" stroke-width="7.167999999999999" fill="none"/>
+      <path d="M 125.43999999999998 0 Q 197.12 -71.67999999999999 125.43999999999998 -143.35999999999999" 
+            stroke="#EAEAEA" stroke-width="7.167999999999999" fill="none"/>
+    </g>
+  </g>
+  
+  <!-- Texte DimiCall (pour les grandes tailles) -->
+  
+  <text x="256" y="473.6" text-anchor="middle" 
+        font-family="Arial, sans-serif" font-size="40.96" font-weight="bold" 
+        fill="#EAEAEA" opacity="0.8">DimiCall</text>
+  
+</svg>

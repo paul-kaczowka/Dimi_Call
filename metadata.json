@@ -1,0 +1,7 @@
+
+{
+  "name": "DimiCall Web",
+  "description": "A web application for managing contacts and calls, featuring CSV/Excel import/export, call simulation, status tracking, and template-based email generation.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

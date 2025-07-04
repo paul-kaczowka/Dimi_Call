@@ -1,0 +1,1455 @@
+@config "../tailwind.config.js";
+
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Variables CSS personnalisées pour le design ultra moderne */
+:root {
+  /* Couleurs principales ultra modernes - AMÉLIORÉES POUR LE MODE CLAIR */
+  --primary: 213 94% 68%; /* Bleu moderne plus vibrant */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 95%; /* Fond secondaire plus doux */
+  --secondary-foreground: 215 25% 27%; /* Texte plus contrasté */
+  --accent: 212 60% 92%; /* Accent plus subtil et élégant */
+  --accent-foreground: 215 30% 25%;
+  --muted: 210 20% 96%; /* Couleur sourde plus propre */
+  --muted-foreground: 215 16% 47%; /* Meilleur contraste */
+
+  /* Backgrounds ultra épurés - AMÉLIORÉS */
+  --background: 0 0% 98%; /* Blanc cassé plus doux pour les yeux */
+  --foreground: 215 25% 15%; /* Texte principal plus doux que le noir pur */
+  --card: 0 0% 100%; /* Cartes en blanc pur */
+  --card-foreground: 215 25% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 15%;
+
+  /* Bordures minimalistes - AMÉLIORÉES */
+  --border: 214 32% 91%; /* Bordures avec une teinte bleue subtile */
+  --input: 214 25% 93%; /* Inputs avec fond légèrement teinté */
+  --ring: 213 94% 68%; /* Ring focus assorti au primary */
+
+  /* États interactifs */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Radius ultra moderne */
+  --radius: 0.75rem;
+
+  /* Ombres subtiles - AMÉLIORÉES */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  /* Mode sombre ultra élégant */
+  --primary: 220 100% 65%;
+  --primary-foreground: 220 9% 9%;
+  --secondary: 220 9% 9%;
+  --secondary-foreground: 220 9% 91%;
+  --accent: 220 9% 9%;
+  --accent-foreground: 220 9% 91%;
+  --muted: 220 9% 9%;
+  --muted-foreground: 220 9% 65%;
+
+  --background: 220 9% 4%;
+  --foreground: 220 9% 91%;
+  --card: 220 9% 6%;
+  --card-foreground: 220 9% 91%;
+  --popover: 220 9% 6%;
+  --popover-foreground: 220 9% 91%;
+
+  --border: 220 9% 15%;
+  --input: 220 9% 15%;
+  --ring: 220 100% 65%;
+
+  --destructive: 0 84% 65%;
+  --destructive-foreground: 220 9% 9%;
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+/* Force tous les sidebar-gap à être masqués - FIX ESPACE VIDE */
+[data-slot="sidebar-gap"] {
+  display: none !important;
+  width: 0 !important;
+  max-width: 0 !important;
+}
+
+/* Sidebar complètement supprimée - plus besoin de CSS spécifique */
+
+/* Reset et base ultra propre */
+* {
+  border-color: hsl(var(--border));
+}
+
+/* Suppression des contours de focus indésirables */
+button:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible),
+[data-slot="dropdown-menu-trigger"]:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Garde le focus visible pour l'accessibilité clavier */
+button:focus-visible,
+[role="button"]:focus-visible,
+[data-slot="dropdown-menu-trigger"]:focus-visible {
+  outline: 2px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: "rlig" 1, "calt" 1;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animations ultra fluides */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Classes utilitaires ultra modernes */
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+.glass-effect {
+  backdrop-filter: blur(20px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.7); /* Plus opaque en mode clair */
+  border: 1px solid rgba(59, 130, 246, 0.1); /* Bordure bleue subtile */
+}
+
+.dark .glass-effect {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Améliorations spécifiques au mode clair */
+.ribbon-button-modern {
+  /* Amélioration des boutons ribbon en mode clair */
+  background: linear-gradient(135deg, 
+    hsl(var(--card)) 0%, 
+    hsl(var(--accent)) 100%);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px 0 rgb(59 130 246 / 0.05), 
+              0 1px 2px -1px rgb(59 130 246 / 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ribbon-button-modern:hover {
+  background: linear-gradient(135deg, 
+    hsl(var(--accent)) 0%, 
+    hsl(var(--primary) / 0.1) 100%);
+  border-color: hsl(var(--primary) / 0.3);
+  box-shadow: 0 4px 12px 0 rgb(59 130 246 / 0.15), 
+              0 2px 4px -1px rgb(59 130 246 / 0.1);
+}
+
+.dark .ribbon-button-modern {
+  /* Conserver l'apparence sombre en mode sombre */
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-sm);
+}
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(hsl(var(--background)), hsl(var(--background))) padding-box,
+              linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))) border-box;
+  border: 1px solid transparent;
+}
+
+.shimmer-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+/* Scrollbars ultra minimalistes */
+.scrollbar-ultra-thin {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted)) transparent;
+}
+
+.scrollbar-ultra-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-ultra-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-ultra-thin::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted));
+  border-radius: 2px;
+}
+
+.scrollbar-ultra-thin::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground));
+}
+
+/* Transitions ultra fluides */
+.transition-ultra {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-colors-ultra {
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+/* États de focus ultra modernes */
+.focus-ultra:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* Grilles ultra responsives */
+.grid-ultra-responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Cards ultra modernes */
+.card-ultra {
+  background: linear-gradient(135deg, 
+    hsl(var(--card)) 0%, 
+    hsl(var(--accent) / 0.3) 100%);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px 0 rgb(59 130 246 / 0.08), 
+              0 1px 2px -1px rgb(59 130 246 / 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-ultra:hover {
+  box-shadow: 0 4px 12px 0 rgb(59 130 246 / 0.12), 
+              0 2px 4px -1px rgb(59 130 246 / 0.12);
+  border-color: hsl(var(--primary) / 0.2);
+  transform: translateY(-1px);
+}
+
+.dark .card-ultra {
+  background: hsl(var(--card));
+  box-shadow: var(--shadow-sm);
+}
+
+.dark .card-ultra:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* Boutons ultra modernes */
+.btn-ultra {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.btn-ultra:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.btn-ultra:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inputs ultra modernes */
+.input-ultra {
+  display: flex;
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--input));
+  background: linear-gradient(135deg, 
+    hsl(var(--background)) 0%, 
+    hsl(var(--card)) 100%);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px 0 rgb(59 130 246 / 0.05);
+}
+
+.input-ultra:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15), 
+              0 2px 6px 0 rgb(59 130 246 / 0.1);
+  background: hsl(var(--card));
+  transform: translateY(-1px);
+}
+
+.input-ultra::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .input-ultra {
+  background-color: hsl(var(--background));
+  box-shadow: var(--shadow-sm);
+}
+
+.dark .input-ultra:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+  transform: none;
+}
+
+/* Tables ultra modernes */
+.table-ultra {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 2px 8px 0 rgb(59 130 246 / 0.08), 
+              0 1px 3px 0 rgb(59 130 246 / 0.08);
+  border: 1px solid hsl(var(--border));
+}
+
+.table-ultra th {
+  background: linear-gradient(135deg, 
+    hsl(var(--muted)) 0%, 
+    hsl(var(--accent)) 100%);
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+}
+
+.table-ultra td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: hsl(var(--card));
+}
+
+.table-ultra tbody tr:hover td {
+  background: linear-gradient(135deg, 
+    hsl(var(--accent) / 0.3) 0%, 
+    hsl(var(--primary) / 0.05) 100%);
+  transform: translateX(2px);
+}
+
+.table-ultra tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dark .table-ultra {
+  box-shadow: var(--shadow-sm);
+  border: 1px solid hsl(var(--border));
+}
+
+.dark .table-ultra th {
+  background-color: hsl(var(--muted));
+}
+
+.dark .table-ultra td {
+  background-color: transparent;
+}
+
+.dark .table-ultra tbody tr:hover td {
+  background-color: hsl(var(--muted) / 0.5);
+  transform: none;
+}
+
+/* Responsive ultra moderne */
+@media (max-width: 768px) {
+  .mobile-stack {
+    flex-direction: column;
+  }
+
+  .mobile-full {
+    width: 100%;
+  }
+
+  .mobile-hidden {
+    display: none;
+  }
+}
+
+/* Animations de chargement ultra modernes */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Effets de survol ultra modernes */
+.hover-lift {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.hover-glow {
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+}
+
+/* Typographie ultra moderne */
+.text-ultra-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.text-ultra-subtitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground));
+}
+
+.text-ultra-body {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: hsl(var(--foreground));
+}
+
+/* Layouts ultra modernes */
+.layout-ultra-sidebar {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  min-height: 100vh;
+}
+
+@media (max-width: 1024px) {
+  .layout-ultra-sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+
+.layout-ultra-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Composants spécialisés ultra modernes */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-indicator.success {
+  background-color: hsl(142 76% 36% / 0.1);
+  color: hsl(142 76% 36%);
+}
+
+.status-indicator.warning {
+  background-color: hsl(38 92% 50% / 0.1);
+  color: hsl(38 92% 50%);
+}
+
+.status-indicator.error {
+  background-color: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+}
+
+.status-indicator.info {
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+}
+
+/* Barres de progression ultra modernes */
+.progress-ultra {
+  height: 0.5rem;
+  background-color: hsl(var(--muted));
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-ultra-fill {
+  height: 100%;
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+  border-radius: 9999px;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Notifications ultra modernes */
+.notification-ultra {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(10px);
+  border: 1px solid hsl(var(--border));
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification-ultra.success {
+  background-color: hsl(142 76% 36% / 0.1);
+  border-color: hsl(142 76% 36% / 0.2);
+}
+
+.notification-ultra.error {
+  background-color: hsl(var(--destructive) / 0.1);
+  border-color: hsl(var(--destructive) / 0.2);
+}
+
+.notification-ultra.info {
+  background-color: hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary) / 0.2);
+}
+
+/* Utilitaires de performance */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Mode haute performance */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-on-scroll {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .animate-on-scroll.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Correction de la transparence des popups */
+[data-slot="select-content"],
+[data-radix-select-content] {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  backdrop-filter: blur(8px);
+}
+
+.dark [data-slot="select-content"],
+.dark [data-radix-select-content] {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* Correction de la transparence du calendrier */
+[data-slot="popover-content"] {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+.dark [data-slot="popover-content"] {
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+[data-slot="calendar"] {
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark [data-slot="calendar"] {
+  background-color: hsl(var(--background)) !important;
+}
+
+/* Amélioration des badges de statut */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.status-badge:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Indicateur de sélection de ligne */
+.row-selection-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 10px hsl(var(--primary) / 0.3);
+}
+
+/* Amélioration des champs date/heure */
+.date-time-field {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.date-time-field:hover {
+  background-color: hsl(var(--muted) / 0.3);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+}
+
+.date-time-icon {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.date-time-icon:hover {
+  color: hsl(var(--primary));
+  transform: scale(1.1);
+}
+
+/* Amélioration du champ commentaire */
+.comment-field {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.comment-quick-select {
+  transition: all 0.2s ease-in-out;
+  border-radius: 0.25rem;
+}
+
+.comment-quick-select:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+/* Animation pour les popups */
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+[data-slot="select-content"][data-state="open"],
+[data-radix-select-content][data-state="open"] {
+  animation: popupSlideIn 0.15s ease-out;
+}
+
+/* ============================================
+   MASQUAGE DES SCROLLBARS POUR TABLES VIRTUALISÉES
+   ============================================ */
+
+/* Masquer les scrollbars sur tous les navigateurs */
+.hide-scrollbar {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Internet Explorer et Edge */
+  -ms-overflow-style: none;
+  /* Safari et Chrome - optionnel pour s'assurer que ça fonctionne */
+  overflow: -moz-scrollbars-none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Support Electron pour les scrollbars invisibles */
+.hide-scrollbar::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+
+.hide-scrollbar::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+.hide-scrollbar::-webkit-scrollbar-corner {
+  display: none !important;
+  background: transparent !important;
+}
+
+/* Headers sticky pour les tables - VERSION CORRIGÉE */
+/* Basé sur la documentation MDN et les meilleures pratiques */
+
+/* Configuration principale pour les tables avec headers sticky */
+.sticky-table-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background: hsl(var(--background)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.1), 0 1px 4px -1px rgb(0 0 0 / 0.1) !important;
+}
+
+/* CRITICAL: Chaque th individuel doit avoir position: sticky */
+.sticky-table-header th,
+.sticky-table-header [data-slot="table-head"] {
+  position: sticky !important;
+  top: 0 !important;
+  background: hsl(var(--background)) !important;
+  z-index: 101 !important;
+  /* Annule toute transformation éventuelle pouvant casser le sticky */
+  transform: none !important;
+}
+
+/* Mode sombre */
+.dark .sticky-table-header {
+  background: hsl(var(--background)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+
+.dark .sticky-table-header th,
+.dark .sticky-table-header [data-slot="table-head"] {
+  background: hsl(var(--background)) !important;
+}
+
+/* Pour les tables avec une classe relative */
+table.relative .sticky-table-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+}
+
+table.relative .sticky-table-header th,
+table.relative .sticky-table-header [data-slot="table-head"] {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 101 !important;
+  background: hsl(var(--background)) !important;
+}
+
+/* Configuration spéciale pour les conteneurs avec scrollbar cachée */
+.hide-scrollbar .sticky-table-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background: hsl(var(--background)) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.hide-scrollbar .sticky-table-header th,
+.hide-scrollbar .sticky-table-header [data-slot="table-head"] {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 101 !important;
+  background: hsl(var(--background)) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* IMPORTANT: Forcer border-collapse: separate pour sticky positioning */
+table:has(.sticky-table-header),
+.Table:has(.sticky-table-header) {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+/* Styles spécifiques pour les data-slots de shadcn/ui */
+[data-slot="table-header"].sticky-table-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background: hsl(var(--background)) !important;
+}
+
+[data-slot="table-header"].sticky-table-header [data-slot="table-head"] {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 101 !important;
+  background: hsl(var(--background)) !important;
+}
+
+/* Styles de débogage - à supprimer en production */
+/* 
+.sticky-table-header {
+  border: 2px solid red !important;
+}
+
+.sticky-table-header th {
+  border: 1px solid blue !important;
+}
+*/
+
+/* Assurer le scroll même avec scrollbars invisibles */
+.hide-scrollbar {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+/* Classe spécifique pour les tables virtualisées */
+.virtual-table-container {
+  /* Firefox */
+  scrollbar-width: none !important;
+  /* Safari et Chrome */
+  -ms-overflow-style: none !important;
+}
+
+.virtual-table-container::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.virtual-table-container::-webkit-scrollbar-track {
+  display: none !important;
+}
+
+.virtual-table-container::-webkit-scrollbar-thumb {
+  display: none !important;
+}
+
+.virtual-table-container::-webkit-scrollbar-corner {
+  display: none !important;
+}
+
+/* Masquer aussi les scrollbars horizontales si nécessaire */
+.hide-scrollbar-horizontal {
+  overflow-x: hidden;
+}
+
+.hide-scrollbar-vertical {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar-vertical::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   ANIMATIONS ULTRA SMOOTH POUR LE PANNEAU DROIT
+   ============================================ */
+
+/* Animation personnalisée pour le panneau qui se déplie */
+@keyframes panelSlideIn {
+  0% {
+    width: 0;
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateX(10px) scale(0.98);
+  }
+  100% {
+    width: 300px;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes panelSlideOut {
+  0% {
+    width: 300px;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translateX(10px) scale(0.98);
+  }
+  100% {
+    width: 0;
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+  }
+}
+
+/* Animation pour le contenu du panneau */
+@keyframes contentFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes contentFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Classe pour l'animation d'ouverture du panneau */
+.panel-slide-in {
+  animation: panelSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Classe pour l'animation de fermeture du panneau */
+.panel-slide-out {
+  animation: panelSlideOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Animation fluide pour les éléments internes */
+.panel-content-enter {
+  animation: contentFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.panel-content-exit {
+  animation: contentFadeOut 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Effet de glow subtil pour le panneau actif */
+.panel-glow {
+  box-shadow: 
+    0 0 0 1px rgba(59, 130, 246, 0.1),
+    0 4px 12px rgba(59, 130, 246, 0.08),
+    0 16px 32px rgba(59, 130, 246, 0.04);
+}
+
+.dark .panel-glow {
+  box-shadow: 
+    0 0 0 1px rgba(147, 197, 253, 0.1),
+    0 4px 12px rgba(147, 197, 253, 0.06),
+    0 16px 32px rgba(147, 197, 253, 0.03);
+}
+
+/* Animation ultra smooth pour le bouton toggle */
+.toggle-button-pulse {
+  position: relative;
+}
+
+.toggle-button-pulse::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from 0deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.toggle-button-pulse.active::before {
+  opacity: 1;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Micro-interactions pour les performances optimales */
+.will-change-transform-gpu {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.hardware-accelerated {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Support pour les préférences d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  .panel-slide-in,
+  .panel-slide-out,
+  .panel-content-enter,
+  .panel-content-exit {
+    animation: none !important;
+    transition: opacity 0.2s ease !important;
+  }
+
+  .toggle-button-pulse::before {
+    animation: none !important;
+  }
+}
+
+/* Force masquer TOUS les scrollbars pour les tables virtualisées */
+.virtual-table-container,
+.virtual-table-container * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-scrollbar: none !important;
+}
+
+.virtual-table-container::-webkit-scrollbar,
+.virtual-table-container *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+.virtual-table-container::-webkit-scrollbar-track,
+.virtual-table-container *::-webkit-scrollbar-track {
+  display: none !important;
+}
+
+.virtual-table-container::-webkit-scrollbar-thumb,
+.virtual-table-container *::-webkit-scrollbar-thumb {
+  display: none !important;
+}
+
+/* NOUVELLE CLASSE: Cacher uniquement la scrollbar horizontale */
+.hide-scrollbar-horizontal-only {
+  /* Garder la fonctionnalité de scroll horizontal */
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+/* Firefox - cacher uniquement la scrollbar horizontale */
+.hide-scrollbar-horizontal-only {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+/* Webkit browsers - cacher uniquement la scrollbar horizontale */
+.hide-scrollbar-horizontal-only::-webkit-scrollbar:horizontal {
+  height: 0 !important;
+  display: none !important;
+}
+
+.hide-scrollbar-horizontal-only::-webkit-scrollbar-track:horizontal {
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
+
+.hide-scrollbar-horizontal-only::-webkit-scrollbar-thumb:horizontal {
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
+
+.hide-scrollbar-horizontal-only::-webkit-scrollbar-corner {
+  display: none !important;
+  background: transparent !important;
+}
+
+/* Alternative pour une approche plus universelle */
+.table-hide-horizontal-scrollbar {
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.table-hide-horizontal-scrollbar::-webkit-scrollbar {
+  width: 12px; /* Garder la scrollbar verticale */
+  height: 0; /* Supprimer la scrollbar horizontale */
+}
+
+.table-hide-horizontal-scrollbar::-webkit-scrollbar:horizontal {
+  height: 0 !important;
+  display: none !important;
+}
+
+.table-hide-horizontal-scrollbar::-webkit-scrollbar-track:horizontal {
+  display: none !important;
+}
+
+.table-hide-horizontal-scrollbar::-webkit-scrollbar-thumb:horizontal {
+  display: none !important;
+}
+
+/* Styles pour les tables avec data-slot (shadcn/ui) */
+[data-slot="table-header"].hide-horizontal-scrollbar,
+.table-container.hide-horizontal-scrollbar {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[data-slot="table-header"].hide-horizontal-scrollbar::-webkit-scrollbar:horizontal,
+.table-container.hide-horizontal-scrollbar::-webkit-scrollbar:horizontal {
+  height: 0 !important;
+  display: none !important;
+}
+
+/* Fix pour forcer l'opacité des dropdowns - DÉFINITIF */
+[data-radix-dropdown-menu-content],
+[data-radix-select-content],
+[data-slot="dropdown-menu-content"] {
+  opacity: 1 !important;
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  z-index: 250 !important;
+}
+
+.dark [data-radix-dropdown-menu-content],
+.dark [data-radix-select-content],
+.dark [data-slot="dropdown-menu-content"] {
+  background-color: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  color: #f9fafb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Force l'opacité des éléments de dropdown */
+[data-radix-dropdown-menu-item],
+[data-radix-dropdown-menu-label],
+[data-radix-dropdown-menu-separator],
+[data-slot="dropdown-menu-item"],
+[data-slot="dropdown-menu-label"],
+[data-slot="dropdown-menu-separator"] {
+  opacity: 1 !important;
+  color: inherit !important;
+}
+
+/* Force les couleurs de texte pour les éléments */
+[data-slot="dropdown-menu-item"] {
+  color: #1f2937 !important;
+}
+
+.dark [data-slot="dropdown-menu-item"] {
+  color: #f9fafb !important;
+}
+
+/* Force les couleurs spécifiques pour certains éléments */
+[data-slot="dropdown-menu-item"] span {
+  color: inherit !important;
+}
+
+[data-slot="dropdown-menu-item"] .text-green-600 {
+  color: #059669 !important;
+}
+
+[data-slot="dropdown-menu-item"] .text-muted-foreground {
+  color: #6b7280 !important;
+}
+
+.dark [data-slot="dropdown-menu-item"] .text-muted-foreground {
+  color: #9ca3af !important;
+}
+
+/* Styles pour améliorer l'affichage de la table */
+.table-container {
+  position: relative;
+}
+
+.table-container .sticky-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 101 !important;
+}
+
+/* Styles pour le drag & drop des colonnes */
+.column-dragging {
+  user-select: none;
+}
+
+.column-drag-over {
+  background: linear-gradient(90deg, hsl(var(--primary)) 0%, transparent 4px);
+  border-left: 4px solid hsl(var(--primary));
+}
+
+.column-dragged {
+  opacity: 0.5;
+  transform: scale(0.95);
+  transition: all 0.2s ease;
+}
+
+.drag-handle {
+  cursor: grab;
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+}
+
+.drag-handle:hover {
+  opacity: 0.8;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Fixes pour WebKit */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* CSS pour éviter les conflits entre les deux types de tables */
+
+/* Isolation pour VirtualizedSupabaseTable - CSS Grid */
+.virtualized-supabase-table {
+  isolation: isolate;
+  contain: layout style;
+}
+
+.virtualized-table-header {
+  contain: layout style;
+}
+
+.virtualized-table-body {
+  contain: layout style;
+}
+
+.virtualized-table-content {
+  contain: layout style;
+}
+
+/* S'assurer que les tables HTML traditionnelles ne sont pas affectées */
+.virtualized-supabase-table table,
+.virtualized-supabase-table thead,
+.virtualized-supabase-table tbody,
+.virtualized-supabase-table tr,
+.virtualized-supabase-table td,
+.virtualized-supabase-table th {
+  display: none !important;
+}
+
+/* Réinitialiser display pour les éléments grid dans VirtualizedSupabaseTable */
+.virtualized-supabase-table .virtualized-table-header,
+.virtualized-supabase-table .virtualized-table-body {
+  display: flex !important;
+}
+
+.virtualized-supabase-table .virtualized-table-header > div {
+  display: grid !important;
+}
+
+/* Empêcher l'imbrication de grilles */
+.virtualized-supabase-table .virtualized-table-body > div {
+  display: block !important;
+}
+
+.virtualized-supabase-table .virtualized-table-body > div > div {
+  display: grid !important;
+}
+
+/* S'assurer que ContactTable (HTML table) reste en HTML natif */
+.contact-table-container table {
+  display: table !important;
+}
+
+.contact-table-container thead {
+  display: table-header-group !important;
+}
+
+.contact-table-container tbody {
+  display: table-row-group !important;
+}
+
+.contact-table-container tr {
+  display: table-row !important;
+}
+
+.contact-table-container td,
+.contact-table-container th {
+  display: table-cell !important;
+}
+
+/* Styles pour la synchronisation du scroll horizontal */
+.scrollbar-hidden {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Safari et Chrome */
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+.scrollbar-hidden::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hidden::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.scrollbar-hidden::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* S'assurer que l'en-tête reste synchronisé */
+.virtualized-table-header {
+  position: relative;
+  z-index: 10;
+}
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+

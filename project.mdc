@@ -1,0 +1,78 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: "Architecture & conventions – Contacts App (Next.js 15 / FastAPI + ADB)"
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+## 📂 Monorepo
+
+- **PNPM workspace**
+  - `apps/web` → Next.js 15 (App Router, React 19)
+  - `apps/api` → FastAPI 0.115
+- Pas de Docker ni CI complexe ; builds et dev locaux.
+
+## 🖥️ Front-end (Next.js 15)
+
+- **Server Actions** pour `call`, `import`, `export` ; fallback route API si navigateur non compatible.
+- **TanStack**
+  - **Table v8 + Virtual** : colonnes “Nom” / “Prénom” fixées, overscan dynamique, navigation clavier, attributs ARIA.
+  - **Query v5** + `persistQueryClient` (**idb-keyval**, throttle 1 s, GC 24 h, toast quota IDB ↗).
+  - **Form 1.11** + **Zod** pour l’édition inline.
+- **Autosave fichier**
+  - `showSaveFilePicker` → handle stocké (`localStorage`) → `contacts-autosave.csv` ré-écrit à chaque mutation ou toutes les 60 s.
+  - Safari < 17 : désactiver et afficher un bouton « Télécharger ».
+- **UI / Style**
+  - **Tailwind v4** (`darkMode: 'class'`, palette OKLCH via `@theme inline`).
+  - **shadcn/ui** + **Framer Motion** (coins 2xl, ombres douces, 120 ms, respect `prefers-reduced-motion`).
+  - Alias TS `@/components`.
+- **Ribbon** fixe au-dessus du tableau : appel (Server Action), e-mail, Cal.com (iframe), rappel…
+
+## 🛠️ Back-end (FastAPI 0.115)
+
+Fichier unique **`apps/api/main.py`** :
+
+```python
+from fastapi import FastAPI, BackgroundTasks, UploadFile
+import subprocess, schedule, asyncio, pandas as pd, pyarrow as pa, pyarrow.parquet as pq
+from datetime import datetime
+
+app = FastAPI()
+
+@app.post("/call")
+def call(number: str):
+    subprocess.run(
+        ["adb", "shell", "am", "start",
+         "-a", "android.intent.action.CALL", "-d", f"tel:{number}"]
+    )
+
+@app.post("/contacts/import")
+async def import_contacts(file: UploadFile):
+    # parse CSV/XLSX en streaming → DB / stockage
+    ...
+
+@app.get("/contacts/export")
+def export_contacts(format: str = "csv"):
+    ...
+
+def backup():
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    df = ...  # récupérer les contacts
+    pq.write_table(pa.Table.from_pandas(df),
+                   f"backups/contacts_{ts}.parquet")
+
+schedule.every(30).minutes.do(backup)
+
+async def run_scheduler():
+    while True:
+        schedule.run_pending()
+        await asyncio.sleep(1)
+
+app.add_event_handler("startup",
+                      lambda: asyncio.create_task(run_scheduler()))
+

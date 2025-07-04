@@ -1,0 +1,291 @@
+GUIDE ULTIME : Création d'un .exe portable DimiCall 100% fonctionnel
+===========================================================================
+
+Ce guide explique comment créer un exécutable portable DimiCall complètement 
+fonctionnel, en partant d'un environnement propre et nettoyé.
+
+PRÉREQUIS
+=========
+- Node.js installé (version LTS recommandée)
+- npm disponible
+- Windows 10/11
+- PowerShell ou Command Prompt
+
+ÉTAPE 1 : NETTOYAGE COMPLET
+===========================
+
+1.1. Nettoyer le cache npm
+--------------------------
+Commande : npm cache clean --force
+
+Explication : Supprime tous les caches npm qui pourraient contenir des 
+versions obsolètes de packages.
+
+1.2. Arrêter tous les processus
+-------------------------------
+Commandes :
+- taskkill /f /im node.exe 2>$null
+- taskkill /f /im electron.exe 2>$null
+- Start-Sleep -Seconds 2
+
+Explication : Termine tous les processus Node.js et Electron qui pourraient 
+verrouiller des fichiers.
+
+1.3. Supprimer les dossiers de build
+------------------------------------
+Commandes PowerShell :
+- Remove-Item -Recurse -Force dist (si existe)
+- Remove-Item -Recurse -Force release (si existe)
+- cmd /c "rmdir /s /q node_modules" (si nécessaire)
+
+Explication : Supprime tous les anciens builds et dossiers de compilation.
+
+ÉTAPE 2 : VÉRIFICATION DE LA CONFIGURATION
+==========================================
+
+2.1. Vérifier package.json
+---------------------------
+S'assurer que la version est correcte (ex: "1.0.6")
+Vérifier les scripts :
+- "dist:win": "npm run build && electron-builder --win"
+- "build": "electron-vite build"
+
+2.2. Vérifier electron.vite.config.ts
+------------------------------------
+S'assurer que la configuration renderer est correcte :
+```
+renderer: {
+  root: 'src',
+  build: {
+    outDir: resolve(__dirname, 'dist/renderer'),
+    rollupOptions: {
+      input: resolve(__dirname, 'src/index.html')
+    }
+  },
+```
+
+IMPORTANT : Le outDir doit utiliser resolve(__dirname, 'dist/renderer') pour que 
+electron-vite génère les fichiers au bon endroit. L'utilisation de chemins relatifs 
+comme '../dist/renderer' peut causer des erreurs de fichiers non trouvés.
+
+2.3. Vérifier electron/main.ts
+------------------------------
+S'assurer que les chemins HTML sont corrects. Le code doit chercher 
+index.html dans plusieurs emplacements possibles :
+- '../renderer/index.html'
+- '../renderer/src/index.html'
+- etc.
+
+ÉTAPE 3 : RÉINSTALLATION DES DÉPENDANCES
+========================================
+
+3.1. Installation forcée
+------------------------
+Commande : npm install --force
+
+Explication : Réinstalle toutes les dépendances en forçant la résolution 
+des conflits éventuels.
+
+3.2. Reconstruction des modules natifs
+--------------------------------------
+Cette étape est automatique avec l'installation mais peut nécessiter 
+electron-rebuild si des erreurs surviennent.
+
+ÉTAPE 4 : BUILD COMPLET
+=======================
+
+4.1. Build de l'application
+---------------------------
+Commande : npm run build
+
+Cette commande :
+- Lance electron-vite build deux fois (prebuild puis build)
+- Compile le main process (dist/main/main.js)
+- Compile le preload (dist/preload/preload.mjs)  
+- Compile le renderer React (dist/renderer/)
+
+Vérification : S'assurer que dist/ contient :
+- main/main.js
+- preload/preload.mjs
+- renderer/index.html
+- renderer/assets/ (avec les fichiers CSS et JS)
+
+ÉTAPE 5 : GÉNÉRATION DE L'EXÉCUTABLE PORTABLE
+=============================================
+
+5.1. Commande de build portable
+-------------------------------
+Commande : npm run dist:win
+
+Cette commande :
+- Relance npm run build (pour être sûr)
+- Lance electron-builder --win
+- Package l'application avec Electron
+- Génère le .exe portable dans release/
+
+5.2. Processus détaillé
+-----------------------
+Le processus inclut :
+- Packaging (platform=win32 arch=x64)
+- Signature des fichiers avec signtool.exe
+- Intégration des platform-tools ADB
+- Création du format portable
+- Génération du fichier final .exe
+
+ÉTAPE 6 : VÉRIFICATION DU RÉSULTAT
+==================================
+
+6.1. Vérifier le fichier généré
+-------------------------------
+Commande : Get-ChildItem release/DimiCall-*-portable.exe | Format-Table Name, LastWriteTime, Length
+
+Vérifications :
+- Le fichier existe
+- La date correspond au build actuel
+- La taille est cohérente (~80-90 MB)
+
+6.2. Structure attendue
+----------------------
+Le dossier release/ doit contenir :
+- DimiCall-X.X.X-portable.exe (fichier principal)
+- win-unpacked/ (version décompressée)
+- builder-*.yml (fichiers de configuration)
+
+ÉTAPE 7 : CORRECTION CONFIGURATION VITE (CRITIQUE)
+==================================================
+
+7.0. Problème de configuration electron.vite.config.ts
+------------------------------------------------------
+PROBLÈME FRÉQUENT : Les fichiers renderer peuvent être générés au mauvais endroit
+à cause d'une configuration de chemin incorrecte.
+
+DIAGNOSTIC :
+- L'application compile sans erreur
+- L'exécutable se lance mais montre "Impossible de charger l'application"
+- Le dossier dist/renderer/ est vide ou n'existe pas
+- Les fichiers sont générés dans ../dist/renderer/ ou ../../dist/renderer/
+
+SOLUTION DÉFINITIVE :
+1. Ouvrir electron.vite.config.ts
+2. Remplacer la configuration renderer par :
+```
+renderer: {
+  root: 'src',
+  build: {
+    outDir: resolve(__dirname, 'dist/renderer'),
+    rollupOptions: {
+      input: resolve(__dirname, 'src/index.html')
+    }
+  },
+  // ... reste de la configuration
+}
+```
+
+3. Ajouter l'import resolve en haut du fichier :
+import { resolve } from 'path'
+
+4. Nettoyer et rebuilder :
+Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+npm run build
+
+VÉRIFICATION :
+- dist/renderer/index.html doit exister
+- dist/renderer/assets/ doit contenir les fichiers CSS et JS
+
+ÉTAPE 8 : RÉSOLUTION DE PROBLÈMES COURANTS
+==========================================
+
+8.1. Erreur "Fichier HTML non trouvé" ou "Failed to load resource"
+-----------------------------------------------------------------------
+Cause : Mauvaise configuration des chemins dans electron.vite.config.ts
+Symptômes : L'exécutable se lance mais affiche "Impossible de charger l'application"
+           ou "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+Solution : 
+1. Corriger electron.vite.config.ts avec un chemin absolu :
+   outDir: resolve(__dirname, 'dist/renderer')
+2. Vérifier que dist/renderer/index.html existe après le build
+3. Si les fichiers sont générés ailleurs, les copier vers dist/renderer/
+4. Nettoyer et rebuilder : npm run clean && npm run build
+
+8.2. Erreur de build Vite
+-------------------------
+Cause : Cache corrompu ou dépendances manquantes
+Solution : Nettoyer cache, supprimer node_modules, réinstaller
+
+8.3. Erreur electron-builder
+----------------------------
+Cause : Fichiers verrouillés ou permissions insuffisantes
+Solution : Arrêter tous les processus, relancer en administrateur si nécessaire
+
+8.4. Fichiers manquants dans l'exécutable
+-----------------------------------------
+Cause : Configuration electron-builder incorrecte
+Solution : Vérifier les sections "files" et "extraResources" dans package.json
+
+COMMANDES COMPLÈTES EN SÉQUENCE
+===============================
+
+Voici la séquence complète à exécuter dans PowerShell :
+
+# 1. Nettoyage
+npm cache clean --force
+taskkill /f /im node.exe 2>$null
+taskkill /f /im electron.exe 2>$null
+Start-Sleep -Seconds 2
+Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force release -ErrorAction SilentlyContinue
+
+# 2. Installation propre
+npm install --force
+
+# 3. Build et génération
+npm run build
+npm run dist:win
+
+# 4. Vérification
+Get-ChildItem release/DimiCall-*-portable.exe | Format-Table Name, LastWriteTime, Length
+
+NOTES IMPORTANTES
+=================
+
+1. TOUJOURS exécuter depuis le dossier DimiCall/
+2. S'assurer que PowerShell a les permissions nécessaires
+3. Le premier build peut prendre plus de temps (téléchargement d'Electron)
+4. La signature des fichiers peut déclencher des alertes antivirus temporaires
+5. Le fichier portable final peut être utilisé sans installation
+
+DÉPANNAGE AVANCÉ
+================
+
+Si l'exécutable ne démarre pas :
+1. Vérifier les logs dans %AppData%\Roaming\dimicall-electron\logs\
+2. Tester la version win-unpacked/ d'abord
+3. Vérifier que tous les fichiers sont présents dans resources/app.asar
+4. Utiliser les DevTools pour diagnostiquer les erreurs JavaScript
+
+VERSION ET HISTORIQUE
+====================
+
+Ce guide est valide pour :
+- DimiCall version 1.0.8
+- Electron 36.4.0
+- electron-builder 26.0.12
+- Node.js LTS
+
+Dernière mise à jour : 21/06/2025
+
+CORRECTIONS VERSION 1.0.8 :
+- Ajout d'une section critique sur la configuration electron.vite.config.ts
+- Résolution du problème "Fichier HTML non trouvé" 
+- Utilisation de chemins absolus avec resolve() pour éviter les erreurs de chemin
+
+SUPPORT ET CONTACT
+==================
+
+En cas de problème persistant :
+1. Vérifier que toutes les étapes ont été suivies
+2. Consulter les logs de build pour identifier l'erreur
+3. S'assurer que l'environnement de développement est à jour
+4. Redémarrer l'ordinateur si nécessaire (libère tous les verrous de fichiers)
+
+=== FIN DU GUIDE === 

@@ -1,0 +1,31 @@
+{
+  "name": "dimicall-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "uuid": "^11.1.0",
+    "papaparse": "^5.5.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "@yume-chan/adb": "^0.0.24",
+    "@yume-chan/adb-daemon-webusb": "^0.0.24",
+    "@supabase/supabase-js": "^2.39.0",
+    "@tanstack/react-query": "^5.17.0",
+    "@tanstack/react-virtual": "^3.0.1",
+    "web-vitals": "^3.5.0",
+    "framer-motion": "^10.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/papaparse": "^5.3.14",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.0"
+  }
+}

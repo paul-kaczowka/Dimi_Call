@@ -44,6 +44,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Vérifier les variables d'environnement Supabase
+        run: |
+          if [[ "$VITE_SUPABASE_URL" == VITE_SUPABASE_URL* ]]; then
+            echo "::error title=Secret VITE_SUPABASE_URL mal configuré::La valeur du secret ne doit pas commencer par 'VITE_SUPABASE_URL='."
+            exit 1
+          fi
+          if [[ -z "$VITE_SUPABASE_URL" ]]; then
+            echo "::error title=Secret VITE_SUPABASE_URL manquant::Le secret est vide ou n'a pas été défini dans les paramètres du dépôt."
+            exit 1
+          fi
+          if [[ "$VITE_SUPABASE_ANON_KEY" == VITE_SUPABASE_ANON_KEY* ]]; then
+            echo "::error title=Secret VITE_SUPABASE_ANON_KEY mal configuré::La valeur du secret ne doit pas commencer par 'VITE_SUPABASE_ANON_KEY='."
+            exit 1
+          fi
+          if [[ -z "$VITE_SUPABASE_ANON_KEY" ]]; then
+            echo "::error title=Secret VITE_SUPABASE_ANON_KEY manquant::Le secret est vide ou n'a pas été défini dans les paramètres du dépôt."
+            exit 1
+          fi
+          echo "✅ Secrets Supabase semblent corrects."
+
       - name: Build / Release avec electron-builder
         uses: samuelmeuli/action-electron-builder@v1
         with:

@@ -1,0 +1,59 @@
+name: Release
+on:
+  workflow_dispatch:            # lancement manuel depuis l’onglet “Actions”
+    inputs:
+      tag:
+        description: "Tag Git (v3.0.7, v4.0.0, etc.). Laisse vide pour utiliser la version du package.json"
+        required: false
+        type: string            # supporte nativement les types depuis fin 2021
+permissions:
+  contents: write               # obligatoire pour créer/mettre à jour une release
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  # empêche electron-builder de chercher un certificat macOS et d’essayer de notariser
+  CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+jobs:
+  build-and-publish:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]  # 1 runner par OS
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # récupère les tags pour electron-builder
+
+      - name: Setup Node 20 + cache npm
+        uses: actions/setup-node@v4           # prend en charge npm, pnpm, yarn
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build / Release avec electron-builder
+        uses: electron-builder/action@v1       # action maintenue, compatible multi-OS
+        with:
+          # arguments spécifiques selon l’OS du runner
+          args: >-
+            ${{ matrix.os == 'windows-latest'
+               && '--win nsis --x64 --publish always'
+               || '--mac --x64 --arm64 dmg --publish always' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          # facultatif : publie même si le tag n’existe pas encore
+          # If: github.event.inputs.tag == ''
+          # GITHUB_REF: refs/heads/${{ github.head_ref }}
+
+      - name: (Optionnel) Upload des artefacts pour consultation rapide
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "packages-${{ runner.os }}"
+          path: |
+            dist/*.dmg
+            dist/*.exe

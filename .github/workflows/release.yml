@@ -54,4 +54,4 @@ jobs:
           name: "packages-${{ runner.os }}"
           path: |
             release/*.dmg
-            release/*.exe 
+            release/*.exe

@@ -317,7 +317,18 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
   };
 
   const handleCheckForUpdates = () => {
-    window.electronAPI?.checkForUpdates?.();
+    try {
+      console.log('🔍 Demande de vérification des mises à jour...');
+      if (window.electronAPI?.checkForUpdates) {
+        window.electronAPI.checkForUpdates();
+        // Optionnel: Afficher une notification à l'utilisateur
+        // toast.info("Vérification des mises à jour en cours...");
+      } else {
+        console.warn('⚠️ API checkForUpdates non disponible (mode développement?)');
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la vérification des mises à jour:', error);
+    }
   };
 
   const renderUpdateSettings = () => (

@@ -1,7 +1,7 @@
 {
   "name": "dimicall-electron",
   "private": true,
-  "version": "87.8.7",
+  "version": "1.0.1",
   "description": "Application de gestion de contacts DimiCall",
   "author": "Dimultra",
   "main": "./dist/main/main.js",
@@ -90,12 +90,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/paul-kaczowka/Dimi_Call.git"
+    "url": "https://github.com/doctorbankai/Dimi_Call.git"
   },
   "build": {
     "publish": {
       "provider": "github",
-      "owner": "paul-kaczowka",
+      "owner": "doctorbankai",
       "repo": "Dimi_Call"
     },
     "appId": "com.dimultra.dimicall",

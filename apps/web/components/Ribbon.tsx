@@ -21,7 +21,7 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from "@/components/ui/tooltip";
-import { cn } from '@/lib/utils';
+import { cn, filterAndJoin } from '@/lib/utils';
 // import { AdbStatusBadge } from '@/components/ui/AdbStatusBadge'; // Supprimé
 import type { Contact } from '@/lib/schemas/contact';
 // import { MinimalDatePicker } from '@/components/ui/MinimalDatePicker'; // Supprimé
@@ -876,28 +876,39 @@ Dimitri MOREL - Arcanis Conseil`;
   const handleLinkedInSearch = () => {
     console.log('[Ribbon] handleLinkedInSearch: autoSearchMode =', autoSearchMode);
     console.log('[Ribbon] handleLinkedInSearch: activeContact =', activeContact);
-    if (activeContact && activeContact.firstName && activeContact.lastName) {
-      const query = encodeURIComponent(`${activeContact.firstName} ${activeContact.lastName}`);
-      console.log('[Ribbon] handleLinkedInSearch: Ouverture LinkedIn avec query =', query);
-      window.open(`https://www.linkedin.com/search/results/people/?keywords=${query}`, LINKEDIN_WINDOW_NAME);
+    if (activeContact) {
+      const query = filterAndJoin(activeContact.firstName, activeContact.lastName);
+      if (query) {
+        console.log('[Ribbon] handleLinkedInSearch: Ouverture LinkedIn avec query =', query);
+        window.open(`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(query)}`, LINKEDIN_WINDOW_NAME);
+      } else {
+        console.warn('[Ribbon] handleLinkedInSearch: Aucune valeur valide pour la recherche (nom/prénom vides).');
+        toast.info("Veuillez sélectionner un contact avec un nom et/ou prénom valide pour la recherche LinkedIn.");
+      }
     } else {
-      console.warn('[Ribbon] handleLinkedInSearch: Conditions non remplies (contact, nom, prénom).');
-      toast.info("Veuillez sélectionner un contact avec un nom et prénom pour la recherche LinkedIn.");
+      console.warn('[Ribbon] handleLinkedInSearch: Aucun contact sélectionné.');
+      toast.info("Veuillez sélectionner un contact pour la recherche LinkedIn.");
     }
   };
 
   const handleGoogleSearch = () => {
-    if (activeContact?.firstName || activeContact?.lastName) {
-      const searchQuery = `${activeContact.firstName || ''} ${activeContact.lastName || ''}`;
-      const url = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-      
-      // Ouvrir l'URL de recherche Google dans un nouvel onglet
-      window.open(url, '_blank');
-      
-      // Mettre à jour le suivi d'automatisation
-      if (autoSearchMode === 'google') {
-        setAutoSearchMode('disabled');
+    if (activeContact) {
+      const searchQuery = filterAndJoin(activeContact.firstName, activeContact.lastName);
+      if (searchQuery) {
+        const url = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+        
+        // Ouvrir l'URL de recherche Google dans un nouvel onglet
+        window.open(url, '_blank');
+        
+        // Mettre à jour le suivi d'automatisation
+        if (autoSearchMode === 'google') {
+          setAutoSearchMode('disabled');
+        }
+      } else {
+        toast.info("Veuillez sélectionner un contact avec un nom et/ou prénom valide pour la recherche Google.");
       }
+    } else {
+      toast.info("Veuillez sélectionner un contact pour la recherche Google.");
     }
   };
   

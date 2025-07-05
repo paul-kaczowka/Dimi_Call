@@ -5,6 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Filtre les valeurs vides/nulles/undefined/N/A et retourne une chaîne propre
+ * @param values - Les valeurs à filtrer et concaténer
+ * @returns Une chaîne propre sans valeurs vides
+ */
+export const filterAndJoin = (...values: (string | null | undefined)[]): string => {
+  return values
+    .filter(val => val && val.trim() !== '' && val.toLowerCase() !== 'n/a' && val !== 'null' && val !== 'undefined')
+    .map(val => val!.trim())
+    .join(' ')
+    .trim();
+};
+
 // Variables globales pour garder les références des fenêtres de recherche
 let linkedInWindowRef: Window | null = null;
 let googleWindowRef: Window | null = null;
@@ -63,7 +76,11 @@ export const openGoogleWindow = (url: string): void => {
  * @param nom - Nom de la personne à rechercher
  */
 export const searchLinkedIn = (prenom: string, nom: string): void => {
-  const query = `${prenom} ${nom}`.trim();
+  const query = filterAndJoin(prenom, nom);
+  if (!query) {
+    console.warn('Aucune valeur valide pour la recherche LinkedIn');
+    return;
+  }
   const url = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(query)}`;
   openLinkedInWindow(url);
 };
@@ -74,7 +91,11 @@ export const searchLinkedIn = (prenom: string, nom: string): void => {
  * @param nom - Nom de la personne à rechercher
  */
 export const searchGoogle = (prenom: string, nom: string): void => {
-  const query = `${prenom} ${nom}`.trim();
+  const query = filterAndJoin(prenom, nom);
+  if (!query) {
+    console.warn('Aucune valeur valide pour la recherche Google');
+    return;
+  }
   const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
   openGoogleWindow(url);
 };

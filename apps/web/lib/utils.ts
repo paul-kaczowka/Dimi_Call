@@ -5,6 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Filtre les valeurs vides/nulles/undefined/N/A et retourne une chaîne propre
+ * @param values - Les valeurs à filtrer et concaténer
+ * @returns Une chaîne propre sans valeurs vides
+ */
+export const filterAndJoin = (...values: (string | null | undefined)[]): string => {
+  return values
+    .filter(val => val && val.trim() !== '' && val.toLowerCase() !== 'n/a' && val !== 'null' && val !== 'undefined')
+    .map(val => val!.trim())
+    .join(' ')
+    .trim();
+};
+
 export function formatPhoneNumber(phoneNumber: string | null | undefined): string {
   if (!phoneNumber) {
     return '';

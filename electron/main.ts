@@ -80,6 +80,10 @@ function getAdbPath(): string {
 function createWindow(): BrowserWindow {
   console.log('🚀 Création de la fenêtre principale...')
   
+  // Configuration spécifique selon la plateforme
+  const isMacOS = process.platform === 'darwin'
+  const HEADER_HEIGHT = 32 // Hauteur de la barre de titre personnalisée
+  
   // Créer la fenêtre de navigateur principale
   const mainWindow = new BrowserWindow({
     width: 1800,
@@ -88,9 +92,10 @@ function createWindow(): BrowserWindow {
     minHeight: 900,
     show: false,
     autoHideMenuBar: false, // Permettre l'accès au menu pour les DevTools
-    titleBarStyle: 'hidden', // Masquer la barre de titre native
-    titleBarOverlay: false,
-    frame: false, // Pas de cadre natif pour permettre la barre de titre personnalisée
+    titleBarStyle: isMacOS ? 'hiddenInset' : 'hidden', // Configuration adaptée pour macOS
+    titleBarOverlay: isMacOS ? { height: HEADER_HEIGHT } : false,
+    frame: isMacOS ? true : false, // Garder le frame sur macOS pour les boutons natifs
+    trafficLightPosition: isMacOS ? { x: 16, y: 16 } : undefined, // Position des boutons macOS
     backgroundColor: '#ffffff', // Couleur de fond blanche pour éviter l'écran noir
     icon: join(__dirname, '../../public/logo-d.png'), // Correction du chemin de l'icône
     webPreferences: {

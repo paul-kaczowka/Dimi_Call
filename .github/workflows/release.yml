@@ -41,6 +41,25 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
+      - name: Définir la version à utiliser
+        shell: bash
+        run: |
+          if [[ -n "${{ github.event.inputs.tag }}" ]]; then
+            # Supprimer le préfixe 'v' si présent (v1.0.0 -> 1.0.0)
+            VERSION="${{ github.event.inputs.tag }}"
+            VERSION="${VERSION#v}"
+            
+            echo "🏷️  Version spécifiée: $VERSION"
+            
+            # Mettre à jour le package.json avec la nouvelle version
+            npm version $VERSION --no-git-tag-version
+            
+            echo "✅ Version mise à jour dans package.json"
+          else
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            echo "📦 Utilisation de la version du package.json: $CURRENT_VERSION"
+          fi
+
       - name: Install dependencies
         run: npm ci
 

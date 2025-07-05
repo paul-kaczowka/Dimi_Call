@@ -120,8 +120,16 @@
             "x64",
             "arm64"
           ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
       "extraResources": [
         {
           "from": "platform-tools-latest-darwin (2)/platform-tools",
@@ -134,6 +142,7 @@
     },
     "win": {
       "icon": "build/icon.ico",
+      "artifactName": "${productName}-${version}-win32-${arch}.${ext}",
       "target": [
         {
           "target": "nsis",

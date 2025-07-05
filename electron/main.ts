@@ -246,11 +246,17 @@ app.whenReady().then(() => {
     return app.getVersion()
   })
 
-  // Vérification manuelle des mises à jour (optionnelle)
+  // Vérification manuelle des mises à jour - update-electron-app gère automatiquement
   ipcMain.on('check-for-updates', () => {
     try {
       console.log('🔍 Vérification manuelle des mises à jour...')
-      autoUpdater.checkForUpdates()
+      console.log('ℹ️ update-electron-app vérifie automatiquement les mises à jour')
+      console.log('📍 Vérification sur: https://update.electronjs.org/doctorbankai/Dimi_Call')
+      console.log('🔄 update-electron-app gère les mises à jour automatiquement en arrière-plan')
+      
+      // Optionnel : Forcer une vérification (mais update-electron-app le fait déjà)
+      // Note: update-electron-app utilise son propre système, pas autoUpdater
+      console.log('⚠️ Le système de mise à jour automatique est géré par update-electron-app')
     } catch (error) {
       console.error('Erreur lors de la vérification des mises à jour', error)
     }

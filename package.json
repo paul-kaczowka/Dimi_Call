@@ -1,7 +1,7 @@
 {
   "name": "dimicall-electron",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Application de gestion de contacts DimiCall",
   "author": "Dimultra",
   "main": "./dist/main/main.js",

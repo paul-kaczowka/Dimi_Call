@@ -1973,6 +1973,7 @@ Dimitri MOREL - Arcanis Conseil`;
           onClose={() => setIsEmailDialogOpen(false)}
           contact={selectedContact}
           showNotification={showNotification}
+          onUpdateContact={updateContact}
         />
       )}
       {selectedContact && isRappelDialogOpen && (

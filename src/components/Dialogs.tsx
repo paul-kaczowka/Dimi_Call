@@ -26,13 +26,54 @@ interface EmailDialogProps {
   onClose: () => void;
   contact: Contact | null;
   showNotification: (type: 'success' | 'error' | 'info', message: string, duration?: number) => void;
+  onUpdateContact?: (updatedFields: Partial<Contact> & { id: string }) => void;
 }
 
-const EmailDialog: React.FC<EmailDialogProps> = ({ isOpen, onClose, contact, showNotification }) => {
+const EmailDialog: React.FC<EmailDialogProps> = ({ isOpen, onClose, contact, showNotification, onUpdateContact }) => {
   const [emailType, setEmailType] = useState<EmailType>(EmailType.PremierContact);
   const [civility, setCivility] = useState<Civility>(Civility.Monsieur);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTime, setSelectedTime] = useState<string>('14:00');
+  const [selectedTime, setSelectedTime] = useState<string>('');
+
+  // Initialiser les champs avec les données existantes du contact
+  useEffect(() => {
+    if (contact) {
+      // Pré-remplir la date si elle existe dans le contact
+      if (contact.dateRDV) {
+        try {
+          const dateRDV = new Date(contact.dateRDV);
+          // Vérifier que la date est valide
+          if (!isNaN(dateRDV.getTime())) {
+            setSelectedDate(dateRDV);
+          }
+        } catch (error) {
+          console.warn('Format de date invalide dans dateRDV:', contact.dateRDV);
+        }
+      }
+      
+      // Pré-remplir l'heure si elle existe dans le contact
+      if (contact.heureRDV) {
+        setSelectedTime(contact.heureRDV);
+      }
+    }
+  }, [contact]);
+
+  // Fonction pour mettre à jour la date du contact
+  const handleDateChange = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (contact && onUpdateContact && date) {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      onUpdateContact({ id: contact.id, dateRDV: formattedDate });
+    }
+  };
+
+  // Fonction pour mettre à jour l'heure du contact
+  const handleTimeChange = (time: string) => {
+    setSelectedTime(time);
+    if (contact && onUpdateContact) {
+      onUpdateContact({ id: contact.id, heureRDV: time });
+    }
+  };
 
   if (!contact) return null;
 
@@ -129,7 +170,7 @@ const EmailDialog: React.FC<EmailDialogProps> = ({ isOpen, onClose, contact, sho
                     <Calendar
                       mode="single"
                       selected={selectedDate}
-                      onSelect={setSelectedDate}
+                      onSelect={handleDateChange}
                       disabled={(date) => date < new Date()}
                       initialFocus
                     />
@@ -146,7 +187,7 @@ const EmailDialog: React.FC<EmailDialogProps> = ({ isOpen, onClose, contact, sho
                     type="time"
                     id="time-picker"
                     value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
+                    onChange={(e) => handleTimeChange(e.target.value)}
                     className="bg-background"
                   />
                 </div>
@@ -260,8 +301,11 @@ const QualificationDialog: React.FC<QualificationDialogProps> = ({ isOpen, onClo
   const [situationPro, setSituationPro] = useState<string>('');
   const [revenus, setRevenus] = useState('');
   const [charges, setCharges] = useState('');
+  const [liquidites, setLiquidites] = useState('');
+  const [effortEpargne, setEffortEpargne] = useState('');
   const [resultat, setResultat] = useState('');
   const [commentaire, setCommentaire] = useState('');
+  const [commentairePersonnel, setCommentairePersonnel] = useState('');
 
   const statutMaritalOptions = [
     { value: '', label: 'Sélectionner...' },
@@ -277,6 +321,8 @@ const QualificationDialog: React.FC<QualificationDialogProps> = ({ isOpen, onClo
   useEffect(() => {
     const rev = parseFloat(revenus) || 0;
     const chg = parseFloat(charges) || 0;
+    const liq = parseFloat(liquidites) || 0;
+    const eff = parseFloat(effortEpargne) || 0;
     let calculatedResult = 0;
     if (rev > 0) {
       calculatedResult = (situationPro === QualificationSituationPro.ChefEntreprise || situationPro === QualificationSituationPro.Freelance) ? chg / rev : chg / (rev * 0.77);
@@ -304,6 +350,14 @@ const QualificationDialog: React.FC<QualificationDialogProps> = ({ isOpen, onClo
       commentParts.push(`Charges foyer: ${chg}€`);
     }
     
+    if (liq > 0) {
+      commentParts.push(`Liquidités disponibles: ${liq}€`);
+    }
+    
+    if (eff > 0) {
+      commentParts.push(`Effort d'épargne: ${eff}€`);
+    }
+    
     if (rev > 0 && chg > 0) {
       commentParts.push(`Résultat calculé: ${calculatedResult.toFixed(2)}`);
     }
@@ -314,10 +368,17 @@ const QualificationDialog: React.FC<QualificationDialogProps> = ({ isOpen, onClo
     } else {
       setCommentaire(commentParts.join(', ') + '.');
     }
-  }, [revenus, charges, situationPro, statutMarital]);
+  }, [revenus, charges, liquidites, effortEpargne, situationPro, statutMarital]);
   
   const handleSave = () => {
-    onSave(commentaire);
+    // Combiner le commentaire automatique et le commentaire personnel
+    let commentaireFinal = commentaire;
+    
+    if (commentairePersonnel.trim()) {
+      commentaireFinal += '\n\nCommentaire personnel: ' + commentairePersonnel.trim();
+    }
+    
+    onSave(commentaireFinal);
     onClose();
   };
 
@@ -398,6 +459,29 @@ const QualificationDialog: React.FC<QualificationDialogProps> = ({ isOpen, onClo
             </div>
           </div>
           
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Liquidités disponibles (€)</Label>
+              <ShadcnInput
+                type="number"
+                value={liquidites}
+                onChange={(e) => setLiquidites(e.target.value)}
+                placeholder="Ex: 10000"
+                className="bg-input text-foreground border-slate-300 dark:border-slate-600"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Effort d'épargne (€)</Label>
+              <ShadcnInput
+                type="number"
+                value={effortEpargne}
+                onChange={(e) => setEffortEpargne(e.target.value)}
+                placeholder="Ex: 500"
+                className="bg-input text-foreground border-slate-300 dark:border-slate-600"
+              />
+            </div>
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="commentaire" className="text-sm font-medium">
               Commentaire de qualification
@@ -409,6 +493,20 @@ const QualificationDialog: React.FC<QualificationDialogProps> = ({ isOpen, onClo
               rows={4}
               className="w-full resize-none bg-input text-foreground border-slate-300 dark:border-slate-600"
               placeholder="Commentaire automatique basé sur les informations saisies..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="commentairePersonnel" className="text-sm font-medium">
+              Commentaire personnel
+            </Label>
+            <Textarea
+              id="commentairePersonnel"
+              value={commentairePersonnel}
+              onChange={(e) => setCommentairePersonnel(e.target.value)}
+              rows={3}
+              className="w-full resize-none bg-input text-foreground border-slate-300 dark:border-slate-600"
+              placeholder="Ajoutez vos observations personnelles ici..."
             />
           </div>
         </div>

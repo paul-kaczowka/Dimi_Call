@@ -65,6 +65,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Générer les icônes pour l'application
+        run: npm run generate-icons
+
+      - name: Vérifier que les icônes ont été générées
+        shell: bash
+        run: |
+          echo "🔍 Vérification des icônes générées..."
+          if [[ -f "build/icon.ico" ]]; then
+            echo "✅ Windows icon (icon.ico) trouvé"
+            ls -la build/icon.ico
+          else
+            echo "❌ Erreur: Windows icon (icon.ico) manquant"
+            exit 1
+          fi
+          
+          if [[ -f "build/icon.icns" ]]; then
+            echo "✅ macOS icon (icon.icns) trouvé"
+            ls -la build/icon.icns
+          else
+            echo "❌ Erreur: macOS icon (icon.icns) manquant"
+            exit 1
+          fi
+          
+          echo "🎉 Toutes les icônes sont présentes !"
+
       - name: Vérifier les variables d'environnement Supabase
         shell: bash
         run: |
@@ -88,6 +113,8 @@ jobs:
 
       - name: Build / Release avec electron-builder
         uses: samuelmeuli/action-electron-builder@v1
+        env:
+          NODE_ENV: production
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           args: ${{ matrix.os == 'windows-latest' && 'nsis --x64 --publish always' || 'dmg zip --x64 --arm64 --publish always' }}

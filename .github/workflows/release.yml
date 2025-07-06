@@ -65,18 +65,39 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Vérifier l'image source pour les icônes
+        shell: bash
+        run: |
+          echo "🔍 Vérification de l'image source..."
+          if [[ -f "DDD.png" ]]; then
+            echo "✅ Image source DDD.png trouvée"
+            ls -la DDD.png
+          else
+            echo "❌ Erreur: Image source DDD.png manquante"
+            exit 1
+          fi
+
       - name: Générer les icônes pour l'application
-        run: npm run generate-icons
+        shell: bash
+        run: |
+          echo "🛠️ Génération des icônes..."
+          npm run generate-icons
+          echo "✅ Génération terminée"
 
       - name: Vérifier que les icônes ont été générées
         shell: bash
         run: |
           echo "🔍 Vérification des icônes générées..."
+          echo "📁 Contenu du dossier build/:"
+          ls -la build/ || true
+          
           if [[ -f "build/icon.ico" ]]; then
             echo "✅ Windows icon (icon.ico) trouvé"
             ls -la build/icon.ico
           else
             echo "❌ Erreur: Windows icon (icon.ico) manquant"
+            echo "📁 Structure complète du dossier build/:"
+            find build/ -type f -name "*.ico" -o -name "*.icns" -o -name "*.png" | head -20 || true
             exit 1
           fi
           
@@ -85,6 +106,8 @@ jobs:
             ls -la build/icon.icns
           else
             echo "❌ Erreur: macOS icon (icon.icns) manquant"
+            echo "📁 Structure complète du dossier build/:"
+            find build/ -type f -name "*.ico" -o -name "*.icns" -o -name "*.png" | head -20 || true
             exit 1
           fi
           
@@ -151,3 +174,4 @@ jobs:
             release/*.dmg
             release/*.zip
           if-no-files-found: warn
+

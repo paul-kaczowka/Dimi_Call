@@ -47,7 +47,8 @@ jobs:
         run: |
           if [[ -n "${{ github.event.inputs.tag }}" ]]; then
             # Supprimer le préfixe 'v' si présent (ex: v1.0.0 -> 1.0.0)
-            VERSION="${{ github.event.inputs.tag#v }}"
+            INPUT_TAG="${{ github.event.inputs.tag }}"
+            VERSION="${INPUT_TAG#v}"
             echo "🏷️ Version spécifiée via input: $VERSION"
             
             # Mettre à jour le package.json et package-lock.json

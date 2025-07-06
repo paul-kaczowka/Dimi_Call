@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Minus, Square, X, Maximize, Settings, User, Smartphone, WifiOff, Loader2, MailQuestion } from 'lucide-react';
+import { Minus, Square, X, Maximize, Settings, User, Smartphone, WifiOff, Loader2, MailQuestion, Download, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Theme } from '../types';
 
@@ -22,6 +22,15 @@ interface CustomMenuBarProps {
   adbConnecting?: boolean;
   activeCallContactId?: string | null;
   onAdbClick?: (e: React.MouseEvent) => void;
+  updateState?: {
+    checking: boolean;
+    available: boolean;
+    downloading: boolean;
+    downloaded: boolean;
+    progress: number;
+    updateInfo?: { version: string } | null;
+  };
+  onUpdateClick?: () => void;
 }
 
 export const CustomMenuBar: React.FC<CustomMenuBarProps> = ({ 
@@ -35,7 +44,9 @@ export const CustomMenuBar: React.FC<CustomMenuBarProps> = ({
   adbConnectionState,
   adbConnecting = false,
   activeCallContactId,
-  onAdbClick
+  onAdbClick,
+  updateState,
+  onUpdateClick
 }) => {
   const auth = useSupabaseAuth();
   const [isMaximized, setIsMaximized] = useState(false);
@@ -171,11 +182,45 @@ export const CustomMenuBar: React.FC<CustomMenuBarProps> = ({
             <span className={cn("text-sm font-semibold", textColor)}>DimiCall</span>
           </div>
           
-          {/* Badge ADB et Badge utilisateur */}
+          {/* Badge mise à jour et Badge ADB et Badge utilisateur */}
           <div 
             className="flex items-center gap-2 pointer-events-auto mr-3"
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           >
+            {/* Badge de mise à jour */}
+            {updateState && (updateState.downloaded || updateState.downloading || updateState.checking) && onUpdateClick && (
+              <Badge 
+                variant={updateState.downloaded ? 'default' : 'outline'} 
+                className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 cursor-pointer transition-all duration-200 hover:scale-105 text-xs h-6",
+                  updateState.downloaded && "bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20 animate-pulse",
+                  updateState.downloading && "bg-orange-500/10 text-orange-600 border-orange-500/20 hover:bg-orange-500/20",
+                  updateState.checking && "bg-gray-500/10 text-gray-600 border-gray-500/20 hover:bg-gray-500/20"
+                )}
+                onClick={onUpdateClick}
+                title={
+                  updateState.downloaded 
+                    ? `Mise à jour ${updateState.updateInfo?.version} prête - Clic pour redémarrer`
+                    : updateState.downloading 
+                    ? `Téléchargement en cours: ${updateState.progress}%`
+                    : 'Vérification des mises à jour...'
+                }
+              >
+                {updateState.downloaded ? (
+                  <RefreshCw className="w-2.5 h-2.5" />
+                ) : updateState.downloading ? (
+                  <Download className="w-2.5 h-2.5 animate-bounce" />
+                ) : (
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                )}
+                <span className="font-medium">
+                  {updateState.downloaded ? 'MAJ' : 
+                   updateState.downloading ? `${updateState.progress}%` : 
+                   'MAJ...'}
+                </span>
+              </Badge>
+            )}
+
             {/* Badge ADB compact */}
             {adbConnectionState && onAdbClick && (
               <Badge 
@@ -281,11 +326,45 @@ export const CustomMenuBar: React.FC<CustomMenuBarProps> = ({
           {/* Espace flexible pour permettre le drag */}
           <div className="flex-1" />
 
-          {/* Badge ADB et Badge utilisateur */}
+          {/* Badge mise à jour et Badge ADB et Badge utilisateur */}
           <div 
             className="flex items-center gap-2 pointer-events-auto mr-3"
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           >
+            {/* Badge de mise à jour */}
+            {updateState && (updateState.downloaded || updateState.downloading || updateState.checking) && onUpdateClick && (
+              <Badge 
+                variant={updateState.downloaded ? 'default' : 'outline'} 
+                className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 cursor-pointer transition-all duration-200 hover:scale-105 text-xs h-6",
+                  updateState.downloaded && "bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20 animate-pulse",
+                  updateState.downloading && "bg-orange-500/10 text-orange-600 border-orange-500/20 hover:bg-orange-500/20",
+                  updateState.checking && "bg-gray-500/10 text-gray-600 border-gray-500/20 hover:bg-gray-500/20"
+                )}
+                onClick={onUpdateClick}
+                title={
+                  updateState.downloaded 
+                    ? `Mise à jour ${updateState.updateInfo?.version} prête - Clic pour redémarrer`
+                    : updateState.downloading 
+                    ? `Téléchargement en cours: ${updateState.progress}%`
+                    : 'Vérification des mises à jour...'
+                }
+              >
+                {updateState.downloaded ? (
+                  <RefreshCw className="w-2.5 h-2.5" />
+                ) : updateState.downloading ? (
+                  <Download className="w-2.5 h-2.5 animate-bounce" />
+                ) : (
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                )}
+                <span className="font-medium">
+                  {updateState.downloaded ? 'MAJ' : 
+                   updateState.downloading ? `${updateState.progress}%` : 
+                   'MAJ...'}
+                </span>
+              </Badge>
+            )}
+
             {/* Badge ADB compact */}
             {adbConnectionState && onAdbClick && (
               <Badge 

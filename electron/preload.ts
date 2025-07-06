@@ -39,6 +39,18 @@ interface ElectronAPI {
   getAppVersion: () => Promise<string>
   // API pour forcer la vérification manuelle des mises à jour
   checkForUpdates: () => Promise<{ status: string; message: string }>
+  
+  // APIs pour la gestion des mises à jour
+  getUpdateStatus: () => Promise<{ updateAvailable: boolean; updateDownloaded: boolean; updateInfo: any }>
+  installUpdate: () => Promise<{ success: boolean; message?: string }>
+  
+  // Écouter les événements de mise à jour
+  onUpdateChecking: (callback: () => void) => void
+  onUpdateAvailable: (callback: (updateInfo: any) => void) => void
+  onUpdateNotAvailable: (callback: (updateInfo: any) => void) => void
+  onUpdateError: (callback: (error: string) => void) => void
+  onUpdateDownloadProgress: (callback: (progress: any) => void) => void
+  onUpdateDownloaded: (callback: (updateInfo: any) => void) => void
 }
 
 // API personnalisée à exposer dans la sandbox du navigateur
@@ -99,7 +111,31 @@ const electronAPI: ElectronAPI = {
   // API pour obtenir la version de l'app
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   // Vérification manuelle
-  checkForUpdates: () => ipcRenderer.invoke('check-for-updates')
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  
+  // APIs pour la gestion des mises à jour
+  getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  
+  // Écouter les événements de mise à jour
+  onUpdateChecking: (callback: () => void) => {
+    ipcRenderer.on('update-checking', callback)
+  },
+  onUpdateAvailable: (callback: (updateInfo: any) => void) => {
+    ipcRenderer.on('update-available', (event, updateInfo) => callback(updateInfo))
+  },
+  onUpdateNotAvailable: (callback: (updateInfo: any) => void) => {
+    ipcRenderer.on('update-not-available', (event, updateInfo) => callback(updateInfo))
+  },
+  onUpdateError: (callback: (error: string) => void) => {
+    ipcRenderer.on('update-error', (event, error) => callback(error))
+  },
+  onUpdateDownloadProgress: (callback: (progress: any) => void) => {
+    ipcRenderer.on('update-download-progress', (event, progress) => callback(progress))
+  },
+  onUpdateDownloaded: (callback: (updateInfo: any) => void) => {
+    ipcRenderer.on('update-downloaded', (event, updateInfo) => callback(updateInfo))
+  }
 }
 
 // Utiliser `contextBridge` APIs pour exposer Electron APIs au

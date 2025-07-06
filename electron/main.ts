@@ -21,6 +21,11 @@ dotenv.config({ path: path.resolve(app.getAppPath(), '..', '.env') })
 
 const execAsync = promisify(exec)
 
+// État de mise à jour
+let updateInfo: any = null
+let updateDownloaded = false
+let mainWindow: BrowserWindow | null = null
+
 // Configuration de l'auto-updater
 if (!is.dev) {
   // Configuration explicite pour éviter les problèmes
@@ -104,7 +109,7 @@ function createWindow(): BrowserWindow {
     minWidth: 1400,
     minHeight: 900,
     show: false,
-    autoHideMenuBar: false, // Permettre l'accès au menu pour les DevTools
+    autoHideMenuBar: !is.dev, // Masquer le menu en production, l'afficher en développement
     titleBarStyle: isMacOS ? 'hiddenInset' : 'hidden', // Configuration adaptée pour macOS
     titleBarOverlay: isMacOS ? { height: HEADER_HEIGHT } : false,
     frame: isMacOS ? true : false, // Garder le frame sur macOS pour les boutons natifs
@@ -116,7 +121,7 @@ function createWindow(): BrowserWindow {
       sandbox: false,
       contextIsolation: true,
       nodeIntegration: false,
-      devTools: true // Permettre explicitement les DevTools
+      devTools: is.dev // DevTools seulement en mode développement
     }
   })
 
@@ -181,8 +186,10 @@ function createWindow(): BrowserWindow {
     if (mainWindow && !mainWindow.isVisible()) {
       console.log('⚠️ Forçage de l\'affichage de la fenêtre après délai')
       mainWindow.show()
-      // Ouvrir les DevTools en cas de problème
-      mainWindow.webContents.openDevTools()
+      // Ouvrir les DevTools en cas de problème seulement en développement
+      if (is.dev) {
+        mainWindow.webContents.openDevTools()
+      }
     }
   }, 5000) // 5 secondes de délai maximum
 
@@ -252,7 +259,7 @@ app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.dimultra.dimicall')
   console.log('🏷️ App ID défini: com.dimultra.dimicall')
 
-  const mainWindow = createWindow()
+  mainWindow = createWindow()
 
   // IPC handlers basiques pour l'interface utilisateur
   ipcMain.handle('get-app-version', () => {
@@ -281,36 +288,75 @@ app.whenReady().then(() => {
     }
   })
 
+  // Obtenir l'état actuel de mise à jour
+  ipcMain.handle('get-update-status', () => {
+    return {
+      updateAvailable: !!updateInfo,
+      updateDownloaded,
+      updateInfo
+    }
+  })
+
+  // Installer et redémarrer avec la mise à jour
+  ipcMain.handle('install-update', () => {
+    if (updateDownloaded) {
+      console.log('🔄 Installation de la mise à jour et redémarrage...')
+      autoUpdater.quitAndInstall()
+      return { success: true }
+    } else {
+      console.log('⚠️ Aucune mise à jour téléchargée disponible')
+      return { success: false, message: 'Aucune mise à jour disponible' }
+    }
+  })
+
   // Événements de l'auto-updater
   autoUpdater.on('checking-for-update', () => {
     console.log('🔍 Vérification des mises à jour...')
+    if (mainWindow) {
+      mainWindow.webContents.send('update-checking')
+    }
   })
 
   autoUpdater.on('update-available', (info) => {
     console.log('📦 Mise à jour disponible:', info.version)
+    updateInfo = info
+    if (mainWindow) {
+      mainWindow.webContents.send('update-available', info)
+    }
   })
 
   autoUpdater.on('update-not-available', (info) => {
     console.log('✅ Application à jour:', info.version)
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available', info)
+    }
   })
 
   autoUpdater.on('error', (err) => {
     console.error('❌ Erreur lors de la mise à jour:', err)
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', err.message)
+    }
   })
 
   autoUpdater.on('download-progress', (progressObj) => {
     const percent = Math.round(progressObj.percent)
     console.log(`⬇️ Téléchargement en cours: ${percent}%`)
+    if (mainWindow) {
+      mainWindow.webContents.send('update-download-progress', progressObj)
+    }
   })
 
   autoUpdater.on('update-downloaded', (info) => {
     console.log('🎉 Mise à jour téléchargée:', info.version)
-    console.log('🔄 Redémarrage automatique dans 5 secondes...')
+    console.log('🔄 Mise à jour prête à être installée - en attente du clic utilisateur')
     
-    // Redémarrer automatiquement après 5 secondes
-    setTimeout(() => {
-      autoUpdater.quitAndInstall()
-    }, 5000)
+    updateDownloaded = true
+    updateInfo = info
+    
+    if (mainWindow) {
+      mainWindow.webContents.send('update-downloaded', info)
+    }
   })
 
   console.log('🚀 electron-updater configuré pour les mises à jour automatiques')

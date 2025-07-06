@@ -24,6 +24,7 @@ import {
 } from './services/dataService';
 
 import { useAdb } from './hooks/useAdb';
+import { useAutoUpdate } from './hooks/useAutoUpdate';
 import { v4 as uuidv4 } from 'uuid';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -104,6 +105,9 @@ const DonutChart: React.FC<{ progress: number; size?: number }> = ({ progress, s
 const App: React.FC = () => {
   // Authentication hook
   const auth = useSupabaseAuth();
+  
+  // Auto-update hook
+  const { updateState, installUpdate } = useAutoUpdate();
   
   // Authentication states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -1453,6 +1457,8 @@ Dimitri MOREL - Arcanis Conseil`;
                 showNotification(success ? 'success' : 'error', success ? 'ADB connecté' : 'Échec de connexion ADB');
               }
             }}
+            updateState={updateState}
+            onUpdateClick={installUpdate}
           />
 
 
@@ -1849,7 +1855,7 @@ Dimitri MOREL - Arcanis Conseil`;
                 {availableColumns
                   // Afficher toutes les colonnes disponibles
                   .map((header) => {
-                    const isEssential = ["#", "Prénom", "Nom"].includes(header);
+                    const isEssential = ["#", "Prénom", "Nom", "Commentaire"].includes(header);
                     return (
                       <DropdownMenuCheckboxItem
                         key={header}

@@ -1,22 +1,35 @@
 import * as dotenv from 'dotenv'
 import * as path from 'path'
-import { app, shell, BrowserWindow, ipcMain, globalShortcut, dialog, autoUpdater } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, globalShortcut, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { spawn, exec } from 'child_process'
 import { promisify } from 'util'
 import * as fs from 'fs'
-import { updateElectronApp } from 'update-electron-app'
+import electronUpdater from 'electron-updater'
+import log from 'electron-log'
+
+// Extraction de autoUpdater depuis le module CommonJS
+const { autoUpdater } = electronUpdater
+
+// Configuration du logger pour electron-updater
+log.transports.file.level = 'info'
+autoUpdater.logger = log
 
 // Load environment variables from .env file at the very start
 dotenv.config({ path: path.resolve(app.getAppPath(), '..', '.env') })
 
 const execAsync = promisify(exec)
 
-// Configuration automatique des mises à jour pour repository public
-// update-electron-app utilise automatiquement le champ "repository" du package.json
+// Configuration de l'auto-updater
 if (!is.dev) {
-  updateElectronApp()
+  // Configuration explicite pour éviter les problèmes
+  autoUpdater.checkForUpdatesAndNotify()
+  
+  // Vérifier les mises à jour toutes les 10 minutes
+  setInterval(() => {
+    autoUpdater.checkForUpdatesAndNotify()
+  }, 10 * 60 * 1000)
 }
 
 // Initialisation ICU forcée avant toute autre chose
@@ -246,26 +259,61 @@ app.whenReady().then(() => {
     return app.getVersion()
   })
 
-  // Vérification manuelle des mises à jour - update-electron-app gère automatiquement
-  ipcMain.on('check-for-updates', () => {
+  // Vérification manuelle des mises à jour avec retour d'état
+  ipcMain.handle('check-for-updates', async () => {
     try {
-      console.log('🔍 Vérification manuelle des mises à jour...')
-      console.log('ℹ️ update-electron-app vérifie automatiquement les mises à jour')
-      console.log('📍 Vérification sur: https://update.electronjs.org/doctorbankai/Dimi_Call')
-      console.log('🔄 update-electron-app gère les mises à jour automatiquement en arrière-plan')
-      
-      // Optionnel : Forcer une vérification (mais update-electron-app le fait déjà)
-      // Note: update-electron-app utilise son propre système, pas autoUpdater
-      console.log('⚠️ Le système de mise à jour automatique est géré par update-electron-app')
+      if (is.dev) {
+        log.warn('Mise à jour ignorée car l\'application est en mode développement.')
+        return {
+          status: 'dev_mode',
+          message: 'La vérification des mises à jour est désactivée en mode développement.'
+        }
+      }
+      log.info('Vérification manuelle des mises à jour initiée par l\'utilisateur...')
+      autoUpdater.checkForUpdatesAndNotify()
+      return { status: 'checking', message: 'Vérification des mises à jour lancée.' }
     } catch (error) {
-      console.error('Erreur lors de la vérification des mises à jour', error)
+      log.error("Erreur lors de l'initiation de la vérification manuelle des mises à jour:", error)
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Une erreur inconnue est survenue.'
+      }
     }
   })
 
-  // Note: update-electron-app gère automatiquement les mises à jour
-  // Il vérifie au démarrage puis toutes les 10 minutes
-  // Il télécharge en arrière-plan et propose un redémarrage automatiquement
-  console.log('🚀 update-electron-app configuré pour les mises à jour automatiques')
+  // Événements de l'auto-updater
+  autoUpdater.on('checking-for-update', () => {
+    console.log('🔍 Vérification des mises à jour...')
+  })
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('📦 Mise à jour disponible:', info.version)
+  })
+
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('✅ Application à jour:', info.version)
+  })
+
+  autoUpdater.on('error', (err) => {
+    console.error('❌ Erreur lors de la mise à jour:', err)
+  })
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    const percent = Math.round(progressObj.percent)
+    console.log(`⬇️ Téléchargement en cours: ${percent}%`)
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('🎉 Mise à jour téléchargée:', info.version)
+    console.log('🔄 Redémarrage automatique dans 5 secondes...')
+    
+    // Redémarrer automatiquement après 5 secondes
+    setTimeout(() => {
+      autoUpdater.quitAndInstall()
+    }, 5000)
+  })
+
+  console.log('🚀 electron-updater configuré pour les mises à jour automatiques')
 
   // Le raccourci de développement par défaut de 'CommandOrControl + R' est
   // enregistré lors du développement pour aider

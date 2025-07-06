@@ -149,8 +149,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
   const [shortcuts, setShortcuts] = useState<ShortcutConfig[]>([]);
   const [shortcutsChanged, setShortcutsChanged] = useState(false);
   const [appVersion, setAppVersion] = useState<string>('Chargement...');
-
-
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
 
   // Charger les templates sauvegardés
   useEffect(() => {
@@ -316,18 +315,36 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     setHasChanges(true);
   };
 
-  const handleCheckForUpdates = () => {
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdates(true);
+    console.log('UI: 🔍 Demande de vérification des mises à jour...');
+    
     try {
-      console.log('🔍 Demande de vérification des mises à jour...');
       if (window.electronAPI?.checkForUpdates) {
-        window.electronAPI.checkForUpdates();
-        // Optionnel: Afficher une notification à l'utilisateur
-        // toast.info("Vérification des mises à jour en cours...");
+        const result = await window.electronAPI.checkForUpdates();
+        
+        console.log(`UI: 📦 Réponse reçue du processus principal:`, result);
+        
+        if (result.status === 'checking') {
+          console.log('UI: ✅ La vérification des mises à jour a été lancée avec succès.');
+          // On peut ajouter un toast ici si besoin
+        } else if (result.status === 'dev_mode') {
+          console.warn(`UI: ⚠️ ${result.message}`);
+          // On peut ajouter un toast ici si besoin
+        } else if (result.status === 'error') {
+          console.error(`UI: ❌ ${result.message}`);
+          // On peut ajouter un toast ici si besoin
+        }
       } else {
-        console.warn('⚠️ API checkForUpdates non disponible (mode développement?)');
+        console.warn('UI: ⚠️ API de mise à jour non disponible. L\'application n\'est probablement pas dans un contexte Electron.');
       }
     } catch (error) {
-      console.error('❌ Erreur lors de la vérification des mises à jour:', error);
+      console.error('UI: ❌ Erreur de communication IPC lors de la vérification des mises à jour:', error);
+    } finally {
+      // Laisser le temps à l'utilisateur de voir le changement d'état du bouton
+      setTimeout(() => {
+        setIsCheckingUpdates(false);
+      }, 2500);
     }
   };
 
@@ -344,11 +361,22 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <Button onClick={handleCheckForUpdates} className="gap-1.5">
-          <DownloadCloud className="w-4 h-4" />
-          Rechercher une mise à jour
+      <CardContent className="space-y-3">
+        <Button 
+          onClick={handleCheckForUpdates} 
+          className="gap-1.5" 
+          disabled={isCheckingUpdates}
+        >
+          <DownloadCloud className={`w-4 h-4 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
+          {isCheckingUpdates ? 'Vérification en cours...' : 'Rechercher une mise à jour'}
         </Button>
+        
+        <p className="text-xs text-muted-foreground">
+          {typeof window !== 'undefined' && window.electronAPI ? 
+            'Les mises à jour se font automatiquement au démarrage et toutes les 10 minutes.' :
+            'Vérification des mises à jour disponible uniquement dans l\'application installée.'
+          }
+        </p>
       </CardContent>
     </Card>
   );

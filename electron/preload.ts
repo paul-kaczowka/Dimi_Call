@@ -38,7 +38,7 @@ interface ElectronAPI {
   // API pour obtenir la version de l'app
   getAppVersion: () => Promise<string>
   // API pour forcer la vérification manuelle des mises à jour
-  checkForUpdates: () => void
+  checkForUpdates: () => Promise<{ status: string; message: string }>
 }
 
 // API personnalisée à exposer dans la sandbox du navigateur
@@ -99,7 +99,7 @@ const electronAPI: ElectronAPI = {
   // API pour obtenir la version de l'app
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   // Vérification manuelle
-  checkForUpdates: () => ipcRenderer.send('check-for-updates')
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates')
 }
 
 // Utiliser `contextBridge` APIs pour exposer Electron APIs au

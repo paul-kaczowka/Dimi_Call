@@ -1,3 +1,4 @@
 provider: github
-owner: paul-kaczowka
-repo: DimiCall 
+owner: doctorbankai
+repo: Dimi_Call
+updaterCacheDirName: dimicall-updater 

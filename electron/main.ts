@@ -790,7 +790,7 @@ app.whenReady().then(() => {
     }
   })
 
-  // Enregistrer les raccourcis globaux pour les touches de fonction F2-F10
+  // Enregistrer les raccourcis globaux pour les touches de fonction F1-F10
   // Ultra-robuste avec debugging détaillé
   const registerFnKeys = () => {
     try {
@@ -802,7 +802,7 @@ app.whenReady().then(() => {
       const registeredKeys: string[] = []
       const failedKeys: string[] = []
       
-      for (let i = 2; i <= 10; i++) {
+      for (let i = 1; i <= 10; i++) {
         const keyName = `F${i}`
         try {
           const success = globalShortcut.register(keyName, () => {

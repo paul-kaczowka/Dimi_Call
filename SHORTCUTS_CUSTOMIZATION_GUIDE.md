@@ -2,9 +2,13 @@
 
 ## Vue d'ensemble
 
-DimiCall permet maintenant de personnaliser complètement les raccourcis clavier des touches de fonction (F2-F10) pour modifier rapidement le statut des contacts.
+DimiCall permet maintenant de personnaliser complètement les raccourcis clavier des touches de fonction pour interagir rapidement avec les contacts.
 
 ## Fonctionnalités
+
+### Raccourcis Disponibles
+- **F1** : Appeler le contact sélectionné (fonction fixe)
+- **F2-F10** : Touches configurables pour changer le statut du contact
 
 ### Configuration Personnalisable
 - **9 touches configurables** : F2 à F10

@@ -556,30 +556,44 @@ Dimitri MOREL - Arcanis Conseil`;
 
 
   const makePhoneCall = useCallback(async (contactToCall?: Contact) => {
+    console.log('🔍 [MAKEPHONECALL] Début makePhoneCall, contactToCall:', contactToCall);
+    console.log('🔍 [MAKEPHONECALL] selectedContact:', selectedContact);
+    
     const targetContact = contactToCall || selectedContact;
+    console.log('🔍 [MAKEPHONECALL] targetContact final:', targetContact);
 
     if (!targetContact) {
+      console.log('❌ [MAKEPHONECALL] Pas de contact - RETURN');
       showNotification('error', "Sélectionnez un contact pour appeler.");
       return;
     }
+    
+    console.log('🔍 [MAKEPHONECALL] activeCallContactId:', activeCallContactId);
     if (activeCallContactId && activeCallContactId !== targetContact.id) {
+      console.log('🔍 [MAKEPHONECALL] Fin d\'appel en cours...');
       endActiveCall(false, activeCallContactId); 
     }
 
     // Vérifier la connexion ADB
+    console.log('🔍 [MAKEPHONECALL] adbConnectionState.isConnected:', adbConnectionState.isConnected);
     if (!adbConnectionState.isConnected) {
+      console.log('❌ [MAKEPHONECALL] ADB pas connecté - RETURN');
       showNotification('error', "Aucun appareil Android connecté via ADB. Connectez votre téléphone d'abord.");
       return;
     }
 
     // Nettoyer le numéro de téléphone pour l'appel
     const cleanPhoneNumber = targetContact.telephone.replace(/[^0-9+]/g, '');
+    console.log('🔍 [MAKEPHONECALL] cleanPhoneNumber:', cleanPhoneNumber);
     
     try {
+      console.log('🔍 [MAKEPHONECALL] Début du try...');
       showNotification('info', `Appel en cours vers ${targetContact.prenom} ${targetContact.nom} au ${targetContact.telephone}...`);
       
-              // Faire l'appel réel via ADB
+      console.log('🔍 [MAKEPHONECALL] Avant makeAdbCall...');
+      // Faire l'appel réel via ADB
         const callResult = await makeAdbCall(cleanPhoneNumber);
+        console.log('🔍 [MAKEPHONECALL] Après makeAdbCall, result:', callResult);
         
         if (callResult.success) {
           // Appel réussi
@@ -792,18 +806,38 @@ Dimitri MOREL - Arcanis Conseil`;
        }
        lastKeyPressRef.current = { key, timestamp: now };
        
-       // Récupérer le contact sélectionné au moment de l'appui sur la touche (depuis la ref)
-       const currentSelectedContact = selectedContactRef.current;
-       if (!currentSelectedContact) {
-         showNotification('error', `Veuillez sélectionner un contact avant d'utiliser ${key}`);
-         return;
-       }
+            // Récupérer le contact sélectionné au moment de l'appui sur la touche (depuis la ref)
+     const currentSelectedContact = selectedContactRef.current;
+     if (!currentSelectedContact) {
+       showNotification('error', `Veuillez sélectionner un contact avant d'utiliser ${key}`);
+       return;
+     }
+     
+     // Traitement spécial pour F1 : Appeler le contact sélectionné (identique au bouton "Appeler")
+     if (key === 'F1') {
+       isProcessingRef.current = true; // Bloquer les nouveaux workflows
        
-       // Utiliser le service de raccourcis personnalisés
-       const newStatus = shortcutService.getStatusForKey(key);
-       if (!newStatus) {
-         return;
+       try {
+         console.log(`📞 [F1] Lancement d'appel via F1 (identique au bouton Appeler)`);
+         console.log(`📞 [F1] Contact sélectionné:`, currentSelectedContact);
+         console.log(`📞 [F1] makePhoneCall function:`, makePhoneCall);
+         
+         // Passer explicitement le contact pour éviter les closures stales
+         await makePhoneCall(currentSelectedContact);
+         console.log(`📞 [F1] makePhoneCall terminé`);
+       } catch (error) {
+         console.error(`❌ [F1] Erreur lors de l'appel:`, error);
+       } finally {
+         isProcessingRef.current = false; // Débloquer les workflows
        }
+       return; // Sortir ici pour F1, pas besoin du workflow de changement de statut
+     }
+     
+     // Utiliser le service de raccourcis personnalisés pour F2-F10
+     const newStatus = shortcutService.getStatusForKey(key);
+     if (!newStatus) {
+       return;
+     }
        
        isProcessingRef.current = true; // Bloquer les nouveaux workflows
        
@@ -2026,18 +2060,35 @@ Dimitri MOREL - Arcanis Conseil`;
           content={
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Utilisez les touches F2 à F10 pour changer rapidement le statut du contact sélectionné :
+                Utilisez les touches de fonction pour interagir rapidement avec le contact sélectionné :
               </p>
-              <div className="grid grid-cols-1 gap-2">
-                {shortcutService.getShortcuts().map(({ key, label }) => (
-                  <div key={key} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {key}
-                    </Badge>
-                    <span className="text-sm">{label}</span>
-                  </div>
-                ))}
+              
+              {/* F1 pour l'appel */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Action d'appel :</p>
+                <div className="flex items-center gap-3 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                  <Badge variant="outline" className="font-mono text-xs bg-blue-100 dark:bg-blue-800">
+                    F1
+                  </Badge>
+                  <span className="text-sm font-medium">📞 Appeler le contact</span>
+                </div>
               </div>
+              
+              {/* F2-F10 pour les statuts */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Changement de statut :</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {shortcutService.getShortcuts().map(({ key, label }) => (
+                    <div key={key} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {key}
+                      </Badge>
+                      <span className="text-sm">{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
               <div className="flex justify-center pt-2">
                 <Button
                   variant="outline"
@@ -2048,7 +2099,7 @@ Dimitri MOREL - Arcanis Conseil`;
                   }}
                   className="text-xs"
                 >
-                  Personnaliser les raccourcis
+                  Personnaliser les raccourcis F2-F10
                 </Button>
               </div>
             </div>

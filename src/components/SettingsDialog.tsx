@@ -708,13 +708,27 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
         <CardHeader>
           <CardTitle>Raccourcis Clavier</CardTitle>
           <CardDescription>
-            Configurez les actions pour les touches de fonction F2 à F10.
+            Configurez les actions pour les touches de fonction F1 à F10.
             Les changements sont sauvegardés lorsque vous cliquez sur "Sauvegarder".
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="border rounded-md">
             <div className="divide-y">
+              {/* F1 - Action d'appel fixe */}
+              <div className="flex items-center justify-between p-3 bg-blue-50/50 dark:bg-blue-900/20">
+                <div className="flex items-center gap-3">
+                  <div className="font-mono text-sm bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300 rounded-md h-8 w-8 flex items-center justify-center border border-blue-300 dark:border-blue-600">
+                    F1
+                  </div>
+                  <span className="font-medium">📞 Appeler le contact sélectionné</span>
+                </div>
+                
+                <Badge variant="outline" className="text-xs text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-600">
+                  Fonction fixe
+                </Badge>
+              </div>
+              
               {shortcuts.map((shortcut) => (
                 <div key={shortcut.key} className="flex items-center justify-between p-3">
                   <div className="flex items-center gap-3">

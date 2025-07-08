@@ -63,6 +63,7 @@ Quand une touche de fonction est pressée :
 ## Configuration Par Défaut
 
 ```
+F1  → Appeler le contact sélectionné (fonction fixe)
 F2  → Prématuré
 F3  → Mauvais num
 F4  → Répondeur

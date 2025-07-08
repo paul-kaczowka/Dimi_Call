@@ -164,10 +164,37 @@ export const ShortcutConfigDialog: React.FC<ShortcutConfigDialogProps> = ({
           {/* Configuration des raccourcis */}
           <div className="space-y-3">
             <h3 className={`text-md font-medium ${theme === Theme.Dark ? 'text-white' : 'text-slate-900'}`}>
-              Association Touches → Statuts
+              Association Touches → Actions
             </h3>
             
-            <div className="grid grid-cols-1 gap-3">
+            {/* F1 - Fonction fixe d'appel */}
+            <div className="space-y-2">
+              <p className={`text-xs font-medium ${theme === Theme.Dark ? 'text-slate-400' : 'text-gray-500'}`}>
+                Action d'appel (fonction fixe) :
+              </p>
+              <div className={`flex items-center justify-between p-3 rounded-lg border-2 border-dashed ${theme === Theme.Dark ? 'border-slate-600 bg-slate-800/50' : 'border-gray-300 bg-gray-50'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`font-mono text-sm rounded-md h-8 w-8 flex items-center justify-center border font-medium ${theme === Theme.Dark ? 'bg-blue-900/50 text-blue-300 border-blue-700' : 'bg-blue-100 text-blue-700 border-blue-300'}`}>
+                    F1
+                  </div>
+                  <span className={`font-medium ${theme === Theme.Dark ? 'text-slate-200' : 'text-slate-700'}`}>
+                    📞 Appeler le contact sélectionné
+                  </span>
+                </div>
+                <Badge variant="outline" className={`text-xs ${theme === Theme.Dark ? 'text-slate-400 border-slate-500' : 'text-gray-500 border-gray-400'}`}>
+                  Fixe
+                </Badge>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <p className={`text-xs font-medium ${theme === Theme.Dark ? 'text-slate-400' : 'text-gray-500'}`}>
+                Changement de statut (configurable) :
+              </p>
+              
+              <div className="grid grid-cols-1 gap-3">
               {shortcuts.map((shortcut) => (
                 <div
                   key={shortcut.key}
@@ -228,6 +255,7 @@ export const ShortcutConfigDialog: React.FC<ShortcutConfigDialogProps> = ({
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           </div>
 

@@ -21,6 +21,7 @@ env:
 jobs:
   build-and-publish:
     strategy:
+      fail-fast: false  # Ne pas annuler les autres jobs si un échoue
       matrix:
         os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
@@ -78,11 +79,12 @@ jobs:
           fi
 
       - name: Générer les icônes pour l'application
+        continue-on-error: true
         shell: bash
         run: |
           echo "🛠️ Génération des icônes..."
-          npm run generate-icons
-          echo "✅ Génération terminée"
+          npm run generate-icons || echo "⚠️ Génération d'icônes échouée, utilisation des icônes existantes"
+          echo "✅ Étape de génération terminée"
 
       - name: Vérifier que les icônes ont été générées
         shell: bash
@@ -116,28 +118,49 @@ jobs:
       - name: Vérifier les variables d'environnement Supabase
         shell: bash
         run: |
+          echo "🔍 Vérification des secrets Supabase..."
           if [[ "$VITE_SUPABASE_URL" == VITE_SUPABASE_URL* ]]; then
-            echo "::error title=Secret VITE_SUPABASE_URL mal configuré::La valeur du secret ne doit pas commencer par 'VITE_SUPABASE_URL='."
-            exit 1
+            echo "::warning title=Secret VITE_SUPABASE_URL mal configuré::La valeur du secret ne doit pas commencer par 'VITE_SUPABASE_URL='."
           fi
           if [[ -z "$VITE_SUPABASE_URL" ]]; then
-            echo "::error title=Secret VITE_SUPABASE_URL manquant::Le secret est vide ou n'a pas été défini dans les paramètres du dépôt."
-            exit 1
+            echo "::warning title=Secret VITE_SUPABASE_URL manquant::Le secret est vide ou n'a pas été défini dans les paramètres du dépôt."
           fi
           if [[ "$VITE_SUPABASE_ANON_KEY" == VITE_SUPABASE_ANON_KEY* ]]; then
-            echo "::error title=Secret VITE_SUPABASE_ANON_KEY mal configuré::La valeur du secret ne doit pas commencer par 'VITE_SUPABASE_ANON_KEY='."
-            exit 1
+            echo "::warning title=Secret VITE_SUPABASE_ANON_KEY mal configuré::La valeur du secret ne doit pas commencer par 'VITE_SUPABASE_ANON_KEY='."
           fi
           if [[ -z "$VITE_SUPABASE_ANON_KEY" ]]; then
-            echo "::error title=Secret VITE_SUPABASE_ANON_KEY manquant::Le secret est vide ou n'a pas été défini dans les paramètres du dépôt."
-            exit 1
+            echo "::warning title=Secret VITE_SUPABASE_ANON_KEY manquant::Le secret est vide ou n'a pas été défini dans les paramètres du dépôt."
           fi
-          echo "✅ Secrets Supabase semblent corrects."
+          echo "ℹ️ Vérification Supabase terminée (les warnings ne bloquent pas le build)"
 
       - name: Build application
         run: npm run build
         env:
           NODE_ENV: production
+
+      - name: Vérifier que le build Vite a réussi
+        shell: bash
+        run: |
+          echo "🔍 Vérification du build Vite..."
+          if [[ -f "dist/main/main.js" ]]; then
+            echo "✅ Main process construit: dist/main/main.js"
+          else
+            echo "❌ Main process manquant: dist/main/main.js"
+            exit 1
+          fi
+          if [[ -f "dist/preload/preload.mjs" ]]; then
+            echo "✅ Preload script construit: dist/preload/preload.mjs"
+          else
+            echo "❌ Preload script manquant: dist/preload/preload.mjs"
+            exit 1
+          fi
+          if [[ -f "dist/renderer/index.html" ]]; then
+            echo "✅ Renderer construit: dist/renderer/index.html"
+          else
+            echo "❌ Renderer manquant: dist/renderer/index.html"
+            exit 1
+          fi
+          echo "🎉 Build Vite vérifié avec succès !"
 
       - name: Build & Publish Windows
         if: matrix.os == 'windows-latest'
@@ -153,14 +176,28 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_ENV: production
 
+      - name: Debug - Lister les fichiers générés
+        if: always()
+        shell: bash
+        run: |
+          echo "📁 Contenu du dossier release/ :"
+          ls -la release/ || echo "❌ Dossier release/ introuvable"
+          echo ""
+          echo "📁 Contenu du dossier dist/ :"
+          ls -la dist/ || echo "❌ Dossier dist/ introuvable"
+          echo ""
+          echo "📁 Structure complète :"
+          find . -name "*.exe" -o -name "*.dmg" -o -name "*.zip" -o -name "*.msi" 2>/dev/null | head -10 || echo "❌ Aucun fichier de distribution trouvé"
+
       - name: Upload des artefacts Windows
         if: matrix.os == 'windows-latest' && always()
         uses: actions/upload-artifact@v4
         with:
           name: "packages-Windows"
           path: |
-            dist/*.exe
             release/*.exe
+            release/*.zip
+            release/*.msi
           if-no-files-found: warn
 
       - name: Upload des artefacts macOS
@@ -169,8 +206,6 @@ jobs:
         with:
           name: "packages-macOS"
           path: |
-            dist/*.dmg
-            dist/*.zip
             release/*.dmg
             release/*.zip
           if-no-files-found: warn

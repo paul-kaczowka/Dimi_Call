@@ -52,10 +52,17 @@ jobs:
             VERSION="${INPUT_TAG#v}"
             echo "🏷️ Version spécifiée via input: $VERSION"
             
-            # Mettre à jour le package.json et package-lock.json
-            npm version "$VERSION" --no-git-tag-version
+            # Vérifier la version actuelle
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            echo "📦 Version actuelle: $CURRENT_VERSION"
             
-            echo "✅ package.json mis à jour avec la version $VERSION"
+            if [[ "$VERSION" != "$CURRENT_VERSION" ]]; then
+              # Mettre à jour le package.json et package-lock.json seulement si différent
+              npm version "$VERSION" --no-git-tag-version
+              echo "✅ package.json mis à jour de $CURRENT_VERSION vers $VERSION"
+            else
+              echo "ℹ️ Version identique ($VERSION), pas de mise à jour nécessaire"
+            fi
           else
             # Utiliser la version existante si aucun tag n'est fourni
             VERSION=$(node -p "require('./package.json').version")

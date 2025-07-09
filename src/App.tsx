@@ -1206,10 +1206,12 @@ Dimitri MOREL - Arcanis Conseil`;
     setTheme(prevTheme => (prevTheme === Theme.Light ? Theme.Dark : Theme.Light));
   };
   
+  // Définition unique des colonnes essentielles
+  const ESSENTIAL_COLUMNS = ["#", "Prénom", "Nom", "Commentaire"];
+
   const toggleColumnVisibility = (header: string) => {
     // Empêcher la modification des colonnes essentielles
-    const essentialColumns = ["#", "Prénom", "Nom"];
-    if (essentialColumns.includes(header)) {
+    if (ESSENTIAL_COLUMNS.includes(header)) {
       showNotification('info', `La colonne "${header}" ne peut pas être masquée car elle est essentielle.`);
       return;
     }
@@ -1244,10 +1246,9 @@ Dimitri MOREL - Arcanis Conseil`;
 
   // Fonction pour masquer les colonnes optionnelles
   const hideOptionalColumns = () => {
-    const essentialColumns = ["#", "Prénom", "Nom", "Téléphone", "Mail", "Statut"];
     const newVisibleColumns = { ...visibleColumns };
     availableColumns.forEach(header => {
-      if (!essentialColumns.includes(header)) {
+      if (!ESSENTIAL_COLUMNS.includes(header)) {
         newVisibleColumns[header] = false;
       }
     });
@@ -1889,7 +1890,7 @@ Dimitri MOREL - Arcanis Conseil`;
                 {availableColumns
                   // Afficher toutes les colonnes disponibles
                   .map((header) => {
-                    const isEssential = ["#", "Prénom", "Nom", "Commentaire"].includes(header);
+                    const isEssential = ESSENTIAL_COLUMNS.includes(header);
                     return (
                       <DropdownMenuCheckboxItem
                         key={header}

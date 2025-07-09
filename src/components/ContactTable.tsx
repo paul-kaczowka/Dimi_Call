@@ -33,7 +33,7 @@ type SortDirection = 'asc' | 'desc' | null;
 // Configuration des colonnes
 interface ColumnConfig {
   id: string;
-  key: keyof Contact;
+  key: keyof Contact | 'actions' | 'index';
   label: string;
   icon: React.ComponentType<any>;
   width?: string;
@@ -119,7 +119,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
     icon: MessageCircle,
     width: 'auto',
     minWidth: '320px', // Augmenté de 250px à 320px pour éviter la troncature
-    canHide: true,
+    canHide: false,
     canSort: true,
     defaultVisible: true,
   },
@@ -616,7 +616,7 @@ const SortableHeader: React.FC<SortableHeaderProps> = ({
   };
 
   const handleClick = () => {
-    if (column.canSort && column.key !== 'actions') {
+    if (column.canSort && column.key !== 'actions' && column.key !== 'index') {
       onSort(column.key as keyof Contact);
     }
   };
@@ -750,7 +750,7 @@ export const ContactTable = forwardRef<ContactTableRef, ContactTableProps>(({
         icon: iconMap[header] || FileText,
         width: header === 'Actions' ? '80px' : 'auto',
         minWidth: header === 'Actions' ? '80px' : header === '#' ? '60px' : header.includes('Téléphone') || header.includes('Mail') ? '150px' : '100px',
-        canHide: !['#', 'Prénom', 'Nom', 'Actions'].includes(header),
+        canHide: !['#', 'Prénom', 'Nom', 'Commentaire', 'Actions'].includes(header),
         canSort: header !== 'Actions',
         defaultVisible: true,
       };
@@ -1608,7 +1608,7 @@ export const ContactTable = forwardRef<ContactTableRef, ContactTableProps>(({
                             }}
                             onClick={(e) => {
                               // Empêcher le tri si on est en train de drag
-                              if (!draggedColumn && column.canSort) {
+                              if (!draggedColumn && column.canSort && column.key !== 'actions' && column.key !== 'index') {
                                 handleSort(column.key as keyof Contact);
                               }
                             }}
@@ -1678,7 +1678,7 @@ export const ContactTable = forwardRef<ContactTableRef, ContactTableProps>(({
                                 minWidth: column.minWidth
                               }}
                               onDoubleClick={() => {
-                                if (column.key !== 'actions') {
+                                if (column.key !== 'actions' && column.key !== 'index') {
                                   handleCellDoubleClick(contact.id, column.key as keyof Contact, contact[column.key as keyof Contact]);
                                 }
                               }}

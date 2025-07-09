@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Mail, X, Save, Undo, ChevronDown, Palette, Bell, Calendar, MessageSquare, Sun, Moon, Monitor, Keyboard, RotateCcw, DownloadCloud, Info, CheckCircle, ExternalLink } from 'lucide-react';
+import { Settings, Mail, X, Save, Undo, ChevronDown, Palette, Calendar, MessageSquare, Sun, Moon, Monitor, Keyboard, RotateCcw, DownloadCloud, Info, CheckCircle, ExternalLink, Columns } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,8 +58,28 @@ const defaultTemplates: EmailTemplates = {
 };
 
 const STORAGE_KEY = 'dimicall_email_templates';
+const COLUMNS_STORAGE_KEY = 'dimicall_column_config';
 
-type SettingsCategory = 'email' | 'sms' | 'calcom' | 'appearance' | 'shortcuts' | 'notifications' | 'update';
+// Configuration par défaut des colonnes
+const DEFAULT_COLUMN_CONFIG = {
+  '#': { isEssential: true, label: 'Numéro de ligne' },
+  'Prénom': { isEssential: true, label: 'Prénom du contact' },
+  'Nom': { isEssential: true, label: 'Nom du contact' },
+  'Commentaire': { isEssential: true, label: 'Commentaire/Qualification' },
+  'Téléphone': { isEssential: false, label: 'Numéro de téléphone' },
+  'Mail': { isEssential: false, label: 'Adresse email' },
+  'Statut': { isEssential: false, label: 'Statut du contact' },
+  'Date Rappel': { isEssential: false, label: 'Date de rappel programmée' },
+  'Heure Rappel': { isEssential: false, label: 'Heure de rappel programmée' },
+  'Date RDV': { isEssential: false, label: 'Date de rendez-vous' },
+  'Heure RDV': { isEssential: false, label: 'Heure de rendez-vous' },
+  'Date Appel': { isEssential: false, label: 'Date du dernier appel' },
+  'Heure Appel': { isEssential: false, label: 'Heure du dernier appel' },
+  'Durée Appel': { isEssential: false, label: 'Durée du dernier appel' },
+  'Source': { isEssential: false, label: 'Source du contact' }
+};
+
+type SettingsCategory = 'email' | 'sms' | 'calcom' | 'appearance' | 'shortcuts' | 'update' | 'columns';
 
 const categories = [
   { 
@@ -92,11 +112,11 @@ const categories = [
     icon: Keyboard, 
     description: 'Touches de fonction'
   },
-  { 
-    id: 'notifications' as SettingsCategory, 
-    label: 'Notifications', 
-    icon: Bell, 
-    description: 'Alertes et rappels'
+  {
+    id: 'columns' as SettingsCategory,
+    label: 'Gestion des Colonnes',
+    icon: Columns,
+    description: 'Configuration de la visibilité des colonnes'
   },
   {
     id: 'update' as SettingsCategory,
@@ -150,6 +170,10 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
   const [shortcutsChanged, setShortcutsChanged] = useState(false);
   const [appVersion, setAppVersion] = useState<string>('Chargement...');
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  
+  // Configuration des colonnes
+  const [columnConfig, setColumnConfig] = useState<Record<string, boolean>>({});
+  const [columnConfigChanged, setColumnConfigChanged] = useState(false);
 
   // Charger les templates sauvegardés
   useEffect(() => {
@@ -182,6 +206,32 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
       setShortcutsChanged(false);
     }
   }, [isOpen]);
+
+  // Charger la configuration des colonnes
+  useEffect(() => {
+    const saved = localStorage.getItem(COLUMNS_STORAGE_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        setColumnConfig(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement de la config des colonnes:', error);
+        // Initialiser avec la config par défaut
+        const defaultConfig: Record<string, boolean> = {};
+        Object.keys(DEFAULT_COLUMN_CONFIG).forEach(column => {
+          defaultConfig[column] = DEFAULT_COLUMN_CONFIG[column as keyof typeof DEFAULT_COLUMN_CONFIG].isEssential;
+        });
+        setColumnConfig(defaultConfig);
+      }
+    } else {
+      // Première utilisation - initialiser avec la config par défaut
+      const defaultConfig: Record<string, boolean> = {};
+      Object.keys(DEFAULT_COLUMN_CONFIG).forEach(column => {
+        defaultConfig[column] = DEFAULT_COLUMN_CONFIG[column as keyof typeof DEFAULT_COLUMN_CONFIG].isEssential;
+      });
+      setColumnConfig(defaultConfig);
+    }
+  }, []);
 
   // Charger la version de l'application
   useEffect(() => {
@@ -260,6 +310,27 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     setHasChanges(true);
   };
 
+  // Gérer le changement de statut essentiel d'une colonne
+  const handleColumnEssentialChange = (columnName: string, isEssential: boolean) => {
+    setColumnConfig(prev => ({
+      ...prev,
+      [columnName]: isEssential
+    }));
+    setColumnConfigChanged(true);
+    setHasChanges(true);
+  };
+
+  // Remettre la configuration des colonnes par défaut
+  const handleColumnConfigReset = () => {
+    const defaultConfig: Record<string, boolean> = {};
+    Object.keys(DEFAULT_COLUMN_CONFIG).forEach(column => {
+      defaultConfig[column] = DEFAULT_COLUMN_CONFIG[column as keyof typeof DEFAULT_COLUMN_CONFIG].isEssential;
+    });
+    setColumnConfig(defaultConfig);
+    setColumnConfigChanged(true);
+    setHasChanges(true);
+  };
+
   // Obtenir la couleur d'un statut
   const getStatusColor = (status: ContactStatus) => {
     const colors: Record<ContactStatus, string> = {
@@ -301,6 +372,12 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
       setShortcutsChanged(false);
     }
     
+    // Sauvegarder la configuration des colonnes si elle a changé
+    if (columnConfigChanged) {
+      localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(columnConfig));
+      setColumnConfigChanged(false);
+    }
+    
     setHasChanges(false);
     onSave();
     onClose();
@@ -312,6 +389,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     setLocalCalcomUrl('https://cal.com/dimitri-morel-arcanis-conseil/audit-patrimonial?overlayCalendar=true');
     setLocalSmsTemplate(DEFAULT_SMS_TEMPLATE);
     handleShortcutsReset();
+    handleColumnConfigReset();
     setHasChanges(true);
   };
 
@@ -768,20 +846,109 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     );
   };
 
-  const renderNotificationSettings = () => (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center">
-            <Bell className="w-4 h-4 text-muted-foreground" />
+  const renderColumnSettings = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Columns className="w-5 h-5" />
+            Configuration des Colonnes
+          </CardTitle>
+          <CardDescription>
+            Définissez quelles colonnes sont essentielles (ne peuvent pas être masquées) ou optionnelles dans le tableau des contacts.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-3">
+                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  Les colonnes essentielles restent toujours visibles
+                </span>
+              </div>
+            </div>
+
+            <div className="border rounded-md divide-y">
+              {Object.keys(DEFAULT_COLUMN_CONFIG).map((columnName) => {
+                const config = DEFAULT_COLUMN_CONFIG[columnName as keyof typeof DEFAULT_COLUMN_CONFIG];
+                const isEssential = columnConfig[columnName] ?? config.isEssential;
+                
+                return (
+                  <div key={columnName} className="flex items-center justify-between p-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-primary"></div>
+                        <div>
+                          <div className="font-medium">{columnName}</div>
+                          <div className="text-sm text-muted-foreground">{config.label}</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id={`column-${columnName}`}
+                          checked={isEssential}
+                          onCheckedChange={(checked) => handleColumnEssentialChange(columnName, checked)}
+                        />
+                        <Label htmlFor={`column-${columnName}`} className="text-sm">
+                          {isEssential ? (
+                            <Badge variant="default" className="text-xs">Essentielle</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs">Optionnelle</Badge>
+                          )}
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                {Object.values(columnConfig).filter(Boolean).length} colonne(s) essentielle(s) sur {Object.keys(DEFAULT_COLUMN_CONFIG).length}
+              </div>
+              <Button variant="outline" size="sm" onClick={handleColumnConfigReset}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Remettre par défaut
+              </Button>
+            </div>
           </div>
-          <div>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Fonctionnalités à venir...</CardDescription>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Impact des Modifications</CardTitle>
+          <CardDescription>
+            Comment ces paramètres affectent l'interface
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+              <span>Les colonnes <strong>essentielles</strong> ne peuvent pas être masquées via le menu "Colonnes"</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+              <span>Les colonnes <strong>optionnelles</strong> peuvent être masquées individuellement</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+              <span>L'option "Masquer les colonnes optionnelles" ne cache que les colonnes non-essentielles</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+              <span>Les paramètres sont sauvegardés automatiquement à la fermeture</span>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 
   const renderCategory = () => {
@@ -796,10 +963,10 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
         return renderAppearanceSettings();
       case 'shortcuts':
         return renderShortcutSettings();
-      case 'notifications':
-        return renderNotificationSettings();
       case 'update':
         return renderUpdateSettings();
+      case 'columns':
+        return renderColumnSettings();
       default:
         return renderEmailSettings();
     }
@@ -892,4 +1059,23 @@ export const getSavedEmailTemplates = (): { templates: EmailTemplates; signature
     templates: defaultTemplates,
     signature: ''
   };
+};
+
+// Fonction utilitaire pour récupérer la configuration des colonnes sauvegardée
+export const getSavedColumnConfig = (): Record<string, boolean> => {
+  const saved = localStorage.getItem(COLUMNS_STORAGE_KEY);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (error) {
+      console.error('Erreur lors du chargement de la config des colonnes:', error);
+    }
+  }
+  
+  // Retourner la config par défaut
+  const defaultConfig: Record<string, boolean> = {};
+  Object.keys(DEFAULT_COLUMN_CONFIG).forEach(column => {
+    defaultConfig[column] = DEFAULT_COLUMN_CONFIG[column as keyof typeof DEFAULT_COLUMN_CONFIG].isEssential;
+  });
+  return defaultConfig;
 }; 

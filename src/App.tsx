@@ -59,7 +59,7 @@ import { useSupabaseAuth } from './lib/auth-client';
 import { ShortcutConfigDialog } from './components/ShortcutConfigDialog';
 import { ShortcutIndicator } from './components/ShortcutIndicator';
 import { shortcutService } from './services/shortcutService';
-import { SettingsDialog } from './components/SettingsDialog';
+import { SettingsDialog, getSavedColumnConfig } from './components/SettingsDialog';
 
 
 // Composant DonutChart moderne
@@ -143,7 +143,24 @@ const App: React.FC = () => {
 
   const [importProgress, setImportProgress] = useState<{ percentage: number; message: string } | null>(null);
   
-  const [autoSearchMode, setAutoSearchMode] = useState<'disabled' | 'linkedin' | 'google'>('disabled');
+  const [autoSearchMode, setAutoSearchMode] = useState<'disabled' | 'linkedin' | 'google'>(() => {
+    try {
+      const saved = localStorage.getItem('auto-search-mode');
+      console.log('🔄 [AUTO-SEARCH] Chargement du mode depuis localStorage:', saved);
+      
+      // Validation de la valeur chargée
+      if (saved && ['disabled', 'linkedin', 'google'].includes(saved)) {
+        console.log('✅ [AUTO-SEARCH] Mode valide trouvé:', saved);
+        return saved as 'disabled' | 'linkedin' | 'google';
+      }
+      
+      console.log('🔄 [AUTO-SEARCH] Aucun mode valide trouvé, utilisation par défaut: linkedin');
+      return 'linkedin'; // Par défaut LinkedIn auto
+    } catch (error) {
+      console.error('❌ [AUTO-SEARCH] Erreur lors du chargement:', error);
+      return 'linkedin';
+    }
+  });
   const [splitPanelOpen, setSplitPanelOpen] = useState(true);
   
   // État pour l'URL Cal.com personnalisée
@@ -790,6 +807,41 @@ Dimitri MOREL - Arcanis Conseil`;
      makePhoneCallRef.current = makePhoneCall;
    }, [makePhoneCall]);
 
+   // Persistance du mode d'auto-recherche dans localStorage
+   useEffect(() => {
+     try {
+       console.log('💾 [AUTO-SEARCH] Sauvegarde du mode:', autoSearchMode);
+       localStorage.setItem('auto-search-mode', autoSearchMode);
+       console.log('✅ [AUTO-SEARCH] Mode sauvegardé avec succès dans localStorage');
+       
+       // Vérification immédiate de la sauvegarde
+       const verification = localStorage.getItem('auto-search-mode');
+       if (verification === autoSearchMode) {
+         console.log('✅ [AUTO-SEARCH] Vérification réussie - Mode persistent:', verification);
+       } else {
+         console.error('❌ [AUTO-SEARCH] Échec de la vérification:', { expected: autoSearchMode, actual: verification });
+       }
+     } catch (error) {
+       console.error('❌ [AUTO-SEARCH] Erreur lors de la sauvegarde:', error);
+     }
+   }, [autoSearchMode]);
+
+   // Fonction de debug pour tester la persistence manuellement (accessible via window.testAutoSearchPersistence)
+   useEffect(() => {
+     (window as any).testAutoSearchPersistence = () => {
+       console.log('🧪 [AUTO-SEARCH] Test de persistence:');
+       console.log('📖 Mode actuel en mémoire:', autoSearchMode);
+       console.log('💾 Mode sauvegardé en localStorage:', localStorage.getItem('auto-search-mode'));
+       console.log('🔄 Pour tester: changez le mode via l\'interface, puis rafraîchissez la page');
+     };
+   }, [autoSearchMode]);
+
+   // Log initial du mode d'auto-recherche au démarrage
+   useEffect(() => {
+     console.log('🚀 [AUTO-SEARCH] Application démarrée avec le mode:', autoSearchMode);
+     console.log('💡 [AUTO-SEARCH] Ce mode sera utilisé avec la touche F1 et le bouton Appeler');
+   }, []); // Seulement au mount
+
    // Handler pour les raccourcis globaux Electron
    useEffect(() => {
      const handleGlobalFnKey = async (event: any, key: string) => {
@@ -1206,12 +1258,29 @@ Dimitri MOREL - Arcanis Conseil`;
     setTheme(prevTheme => (prevTheme === Theme.Light ? Theme.Dark : Theme.Light));
   };
   
-  // Définition unique des colonnes essentielles
-  const ESSENTIAL_COLUMNS = ["#", "Prénom", "Nom", "Commentaire"];
+  // Obtenir les colonnes essentielles depuis les réglages sauvegardés
+  const getEssentialColumns = () => {
+    try {
+      const columnConfig = getSavedColumnConfig();
+      return Object.keys(columnConfig).filter(column => columnConfig[column]);
+    } catch (error) {
+      console.error('Erreur lors du chargement de la config des colonnes:', error);
+      // Fallback vers la config par défaut
+      return ["#", "Prénom", "Nom", "Commentaire"];
+    }
+  };
+
+  // État pour les colonnes essentielles (rechargé depuis les réglages)
+  const [essentialColumns, setEssentialColumns] = useState<string[]>(() => getEssentialColumns());
+
+  // Fonction pour recharger les colonnes essentielles depuis les réglages
+  const reloadEssentialColumns = () => {
+    setEssentialColumns(getEssentialColumns());
+  };
 
   const toggleColumnVisibility = (header: string) => {
     // Empêcher la modification des colonnes essentielles
-    if (ESSENTIAL_COLUMNS.includes(header)) {
+    if (essentialColumns.includes(header)) {
       showNotification('info', `La colonne "${header}" ne peut pas être masquée car elle est essentielle.`);
       return;
     }
@@ -1248,7 +1317,7 @@ Dimitri MOREL - Arcanis Conseil`;
   const hideOptionalColumns = () => {
     const newVisibleColumns = { ...visibleColumns };
     availableColumns.forEach(header => {
-      if (!ESSENTIAL_COLUMNS.includes(header)) {
+      if (!essentialColumns.includes(header)) {
         newVisibleColumns[header] = false;
       }
     });
@@ -1731,7 +1800,10 @@ Dimitri MOREL - Arcanis Conseil`;
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem 
-                      onClick={() => setAutoSearchMode('disabled')}
+                      onClick={() => {
+                        setAutoSearchMode('disabled');
+                        console.log('🔧 [AUTO-SEARCH] Mode changé vers: Désactivé');
+                      }}
                       className="cursor-pointer"
                     >
                       <X className="mr-2 h-4 w-4 text-red-500" />
@@ -1739,7 +1811,10 @@ Dimitri MOREL - Arcanis Conseil`;
                       {autoSearchMode === 'disabled' && <span className="ml-auto text-xs opacity-70">Actuel</span>}
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      onClick={() => setAutoSearchMode('linkedin')}
+                      onClick={() => {
+                        setAutoSearchMode('linkedin');
+                        console.log('🔧 [AUTO-SEARCH] Mode changé vers: Auto-LinkedIn');
+                      }}
                       className="cursor-pointer"
                     >
                       <Linkedin className="mr-2 h-4 w-4 text-blue-500" />
@@ -1747,7 +1822,10 @@ Dimitri MOREL - Arcanis Conseil`;
                       {autoSearchMode === 'linkedin' && <span className="ml-auto text-xs opacity-70">Actuel</span>}
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      onClick={() => setAutoSearchMode('google')}
+                      onClick={() => {
+                        setAutoSearchMode('google');
+                        console.log('🔧 [AUTO-SEARCH] Mode changé vers: Auto-Google');
+                      }}
                       className="cursor-pointer"
                     >
                       <Globe className="mr-2 h-4 w-4 text-green-500" />
@@ -1890,7 +1968,7 @@ Dimitri MOREL - Arcanis Conseil`;
                 {availableColumns
                   // Afficher toutes les colonnes disponibles
                   .map((header) => {
-                    const isEssential = ESSENTIAL_COLUMNS.includes(header);
+                    const isEssential = essentialColumns.includes(header);
                     return (
                       <DropdownMenuCheckboxItem
                         key={header}
@@ -2128,6 +2206,7 @@ Dimitri MOREL - Arcanis Conseil`;
            isOpen={isSettingsOpen}
            onClose={() => setIsSettingsOpen(false)}
            onSave={() => {
+             reloadEssentialColumns(); // Recharger les colonnes essentielles
              showNotification('success', 'Réglages sauvegardés avec succès', 3000);
            }}
            calcomUrl={calcomUrl}

@@ -298,8 +298,11 @@ class AdbService {
       // Nettoyer le numéro de téléphone
       const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
       
+      // Doubler les apostrophes pour le shell distant et échapper les guillemets doubles
+      const escapedMessage = message.replace(/"/g, '\\"').replace(/'/g, "''");
+      
       // Exécuter la commande ADB pour ouvrir l'app SMS
-      const command = `am start -a android.intent.action.SENDTO -d sms:${cleanNumber} --es sms_body "${message.replace(/"/g, '\\"')}"`;
+      const command = `am start -a android.intent.action.SENDTO -d sms:${cleanNumber} --es sms_body "${escapedMessage}"`;
       const result = await this.executeShellCommand(command);
       
       if (result.includes('Starting') || result.includes('Activity')) {

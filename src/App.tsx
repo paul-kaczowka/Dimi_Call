@@ -60,6 +60,7 @@ import { ShortcutConfigDialog } from './components/ShortcutConfigDialog';
 import { ShortcutIndicator } from './components/ShortcutIndicator';
 import { shortcutService } from './services/shortcutService';
 import { SettingsDialog, getSavedColumnConfig } from './components/SettingsDialog';
+import { adbService } from './services/adbService'; // Importer l'instance
 
 
 // Composant DonutChart moderne
@@ -206,6 +207,7 @@ Je vous envoie l'adresse de notre site web que vous puissiez en savoir d'avantag
 https://arcanis-conseil.fr
 
 Le site est avant tout une vitrine, le mieux est de m'appeler si vous souhaitez davantage d'informations ou de prendre un créneau de 30 minutes dans mon agenda via ce lien :
+
 https://calendly.com/dimitri-morel-arcanis-conseil/audit
 
 Bien à vous,
@@ -522,6 +524,29 @@ Dimitri MOREL - Arcanis Conseil`;
     searchGoogle(target.prenom, target.nom);
   }, [selectedContact, showNotification]);
 
+  // Fonction utilitaire pour nettoyer et normaliser le texte des SMS
+  const cleanSmsText = (text: string): string => {
+    const cleaned = text
+      .replace(/[''‛‚]/g, "'")
+      .replace(/[""]/g, '"')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      // Remplacer les groupes d'espaces ou tabulations par un seul espace
+      .replace(/[ \t]+/g, ' ')
+      // Supprimer les espaces en début et fin de lignes, mais laisser les \n intacts
+      .replace(/\n[ \t]+/g, '\n')
+      .replace(/[ \t]+\n/g, '\n')
+      .trim();
+
+    console.log('🧹 Nettoyage SMS:', {
+      'Texte original': text,
+      'Texte nettoyé': cleaned,
+      'Contient sauts de ligne': cleaned.includes('\n'),
+      'Nombre de lignes': cleaned.split(/\n/).length,
+    });
+
+    return cleaned;
+  };
+
   const handleSms = useCallback(async (civilite?: string, contact?: Contact) => {
     const target = contact || selectedContact;
     if (!target) {
@@ -545,11 +570,13 @@ Dimitri MOREL - Arcanis Conseil`;
     const greetingName = civilite ? `${civilite} ${target.nom}`.trim() : `${target.prenom} ${target.nom}`.trim() || "client(e)";
     
     // Utiliser le template SMS personnalisé avec remplacement des variables
-    const messageBody = smsTemplate
+    const rawMessageBody = smsTemplate
       .replace(/{civilite}/g, civilite || target.prenom || "")
       .replace(/{nom}/g, target.nom || "")
       .replace(/{prenom}/g, target.prenom || "")
       .replace(/{nom_complet}/g, `${target.prenom || ""} ${target.nom || ""}`.trim() || "client(e)");
+
+    const messageBody = cleanSmsText(rawMessageBody);
 
     // Nettoyer le numéro de téléphone
     const phoneNumberCleaned = target.telephone.replace(/\s/g, '');
@@ -557,20 +584,37 @@ Dimitri MOREL - Arcanis Conseil`;
     try {
       showNotification('info', "Préparation du SMS...");
       
-      // Préparer le SMS avec le message pré-rempli
-      const result = await sendSms(phoneNumberCleaned, messageBody);
+      console.log('📱 Envoi SMS:', {
+        'Destinataire': `${target.prenom} ${target.nom}`,
+        'Numéro': phoneNumberCleaned,
+        'Template original': smsTemplate,
+        'Message brut après variables': rawMessageBody,
+        'Message final nettoyé': messageBody,
+        'Longueur message': messageBody.length
+      });
+      
+      // SOLUTION: Utiliser executeShell directement comme dans le test qui fonctionne
+      // pour préserver les apostrophes correctement encodées
+      // Forcer l'encodage des apostrophes comme dans la commande qui fonctionne
+      const encodedMessage = encodeURIComponent(messageBody).replace(/'/g, '%27');
+      const shellCommand = `am start -a android.intent.action.SENDTO -d "sms:${phoneNumberCleaned}?body=${encodedMessage}"`;
+      
+      console.log('📱 Commande shell SMS:', shellCommand);
+      
+      const result = await window.electronAPI.adb.executeShell(shellCommand);
       
       if (result.success) {
+        console.log('📱 Résultat SMS:', result.output);
         showNotification('success', "L'application de messagerie s'est ouverte avec votre message pré-rempli. Vous n'avez plus qu'à vérifier et envoyer.");
       } else {
-        showNotification('error', `Échec de la préparation du SMS: ${result.message}`);
+        console.error('📱 Erreur SMS:', result.error);
+        showNotification('error', `Échec de la préparation du SMS: ${result.error || 'Erreur inconnue'}`);
       }
     } catch (error) {
+      console.error('📱 Erreur lors de la préparation du SMS:', error);
       showNotification('error', `Erreur lors de la préparation du SMS: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
-  }, [selectedContact, showNotification, adbConnectionState.isConnected, sendSms, smsTemplate]);
-
-
+  }, [selectedContact, showNotification, adbConnectionState.isConnected, smsTemplate]);
 
   const makePhoneCall = useCallback(async (contactToCall?: Contact) => {
     console.log('🔍 [MAKEPHONECALL] Début makePhoneCall, contactToCall:', contactToCall);
@@ -1279,18 +1323,13 @@ Dimitri MOREL - Arcanis Conseil`;
   };
 
   const toggleColumnVisibility = (header: string) => {
-    // Empêcher la modification des colonnes essentielles
-    if (essentialColumns.includes(header)) {
-      showNotification('info', `La colonne "${header}" ne peut pas être masquée car elle est essentielle.`);
-      return;
-    }
-    
     // Vérifier que la colonne est disponible
     if (!availableColumns.includes(header)) {
       showNotification('error', `La colonne "${header}" n'est pas disponible dans les données actuelles.`);
       return;
     }
     
+    // Permettre la modification de toutes les colonnes
     setVisibleColumns(prev => {
       const newVisibleColumns = { ...prev, [header]: !prev[header] };
       console.log('🔧 App.tsx - Toggle column visibility:', {
@@ -1313,8 +1352,8 @@ Dimitri MOREL - Arcanis Conseil`;
     showNotification('success', 'Toutes les colonnes disponibles sont maintenant affichées.');
   };
 
-  // Fonction pour masquer les colonnes optionnelles
-  const hideOptionalColumns = () => {
+  // Fonction pour masquer les colonnes non-recommandées
+  const hideNonEssentialColumns = () => {
     const newVisibleColumns = { ...visibleColumns };
     availableColumns.forEach(header => {
       if (!essentialColumns.includes(header)) {
@@ -1322,7 +1361,7 @@ Dimitri MOREL - Arcanis Conseil`;
       }
     });
     setVisibleColumns(newVisibleColumns);
-    showNotification('success', 'Colonnes optionnelles masquées.');
+    showNotification('success', 'Colonnes non-recommandées masquées.');
   };
 
   const handleRefresh = () => {
@@ -1972,19 +2011,15 @@ Dimitri MOREL - Arcanis Conseil`;
                     return (
                       <DropdownMenuCheckboxItem
                         key={header}
-                        className={cn(
-                          "flex items-center gap-2",
-                          isEssential && "opacity-60 cursor-not-allowed"
-                        )}
+                        className="flex items-center gap-2"
                         checked={visibleColumns[header] || false}
                         onCheckedChange={() => toggleColumnVisibility(header)}
                         onSelect={(e) => e.preventDefault()} // Empêche la fermeture du menu
-                        disabled={isEssential}
                       >
                         <span className="flex-1">{header}</span>
                         {isEssential && (
                           <span className="text-xs text-muted-foreground ml-2">
-                            (essentielle)
+                            (recommandée)
                           </span>
                         )}
                       </DropdownMenuCheckboxItem>
@@ -2007,11 +2042,11 @@ Dimitri MOREL - Arcanis Conseil`;
                 <DropdownMenuCheckboxItem
                   className="flex items-center gap-2 text-orange-600 dark:text-orange-400"
                   checked={false}
-                  onCheckedChange={hideOptionalColumns}
+                  onCheckedChange={hideNonEssentialColumns}
                   onSelect={(e) => e.preventDefault()} // Empêche la fermeture du menu
                 >
                   <Eye className="h-4 w-4" />
-                  Masquer les colonnes optionnelles
+                  Masquer les colonnes non-recommandées
                 </DropdownMenuCheckboxItem>
                 
                 {/* Informations sur les colonnes */}

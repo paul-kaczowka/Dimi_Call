@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Mail, X, Save, Undo, ChevronDown, Palette, Calendar, MessageSquare, Sun, Moon, Monitor, Keyboard, RotateCcw, DownloadCloud, Info, CheckCircle, ExternalLink, Columns } from 'lucide-react';
+import { 
+  Settings, Mail, X, Save, Undo, ChevronDown, Palette, Calendar, MessageSquare, 
+  Sun, Moon, Monitor, Keyboard, RotateCcw, DownloadCloud, Info, CheckCircle, 
+  ExternalLink, Columns, Bell, Check, Globe, Home, Lock, Video, Link
+} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +14,25 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
 import { EmailType, Civility, Theme, ContactStatus } from '../types';
 import { shortcutService, ShortcutConfig } from '../services/shortcutService';
 import { cn } from '../lib/utils';
@@ -142,6 +165,7 @@ Je vous envoie l'adresse de notre site web que vous puissiez en savoir d'avantag
 https://arcanis-conseil.fr
 
 Le site est avant tout une vitrine, le mieux est de m'appeler si vous souhaitez davantage d'informations ou de prendre un créneau de 30 minutes dans mon agenda via ce lien :
+
 https://calendly.com/dimitri-morel-arcanis-conseil/audit
 
 Bien à vous,
@@ -331,21 +355,18 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     setHasChanges(true);
   };
 
-  // Obtenir la couleur d'un statut
-  const getStatusColor = (status: ContactStatus) => {
-    const colors: Record<ContactStatus, string> = {
-      [ContactStatus.NonDefini]: 'bg-muted text-muted-foreground border-transparent',
-      [ContactStatus.Premature]: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-      [ContactStatus.MauvaisNum]: 'bg-red-500/10 text-red-500 border-red-500/20',
-      [ContactStatus.Repondeur]: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-      [ContactStatus.ARappeler]: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-      [ContactStatus.PasInteresse]: 'bg-red-500/10 text-red-500 border-red-500/20',
-      [ContactStatus.Argumente]: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-      [ContactStatus.DO]: 'bg-green-500/10 text-green-500 border-green-500/20',
-      [ContactStatus.RO]: 'bg-teal-500/10 text-teal-500 border-teal-500/20',
-      [ContactStatus.ListeNoire]: 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
-    };
-    return colors[status] || 'bg-muted text-muted-foreground border-transparent';
+  // Vérifier les mises à jour
+  const handleCheckForUpdates = async () => {
+    if (typeof window !== 'undefined' && window.electronAPI?.checkForUpdates) {
+      setIsCheckingUpdates(true);
+      try {
+        await window.electronAPI.checkForUpdates();
+      } catch (error) {
+        console.error('Erreur lors de la vérification des mises à jour:', error);
+      } finally {
+        setIsCheckingUpdates(false);
+      }
+    }
   };
 
   const handleSave = () => {
@@ -391,39 +412,6 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     handleShortcutsReset();
     handleColumnConfigReset();
     setHasChanges(true);
-  };
-
-  const handleCheckForUpdates = async () => {
-    setIsCheckingUpdates(true);
-    console.log('UI: 🔍 Demande de vérification des mises à jour...');
-    
-    try {
-      if (window.electronAPI?.checkForUpdates) {
-        const result = await window.electronAPI.checkForUpdates();
-        
-        console.log(`UI: 📦 Réponse reçue du processus principal:`, result);
-        
-        if (result.status === 'checking') {
-          console.log('UI: ✅ La vérification des mises à jour a été lancée avec succès.');
-          // On peut ajouter un toast ici si besoin
-        } else if (result.status === 'dev_mode') {
-          console.warn(`UI: ⚠️ ${result.message}`);
-          // On peut ajouter un toast ici si besoin
-        } else if (result.status === 'error') {
-          console.error(`UI: ❌ ${result.message}`);
-          // On peut ajouter un toast ici si besoin
-        }
-      } else {
-        console.warn('UI: ⚠️ API de mise à jour non disponible. L\'application n\'est probablement pas dans un contexte Electron.');
-      }
-    } catch (error) {
-      console.error('UI: ❌ Erreur de communication IPC lors de la vérification des mises à jour:', error);
-    } finally {
-      // Laisser le temps à l'utilisateur de voir le changement d'état du bouton
-      setTimeout(() => {
-        setIsCheckingUpdates(false);
-      }, 2500);
-    }
   };
 
   const renderUpdateSettings = () => (
@@ -579,13 +567,8 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
                     <code className="bg-background px-2 py-1 rounded border text-xs">{'{nom}'}</code>
                     <code className="bg-background px-2 py-1 rounded border text-xs">{'{signature}'}</code>
                     <code className="bg-background px-2 py-1 rounded border text-xs">{'{rdv}'}</code>
-                    {selectedEmailType === EmailType.R0Externe && (
-                      <code className="bg-background px-2 py-1 rounded border text-xs">{'{adresse}'}</code>
-                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Ces variables seront automatiquement remplacées par les informations du contact
-                  </p>
+                  <p className="text-xs text-muted-foreground">Ces variables seront automatiquement remplacées par les informations du contact</p>
                 </div>
               </div>
             </CardContent>
@@ -622,39 +605,22 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
           </div>
 
           {/* Informations d'aide */}
-          <div className="bg-muted/50 rounded-lg p-4 border">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Guide de configuration</p>
-              </div>
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <p>• Utilisez l'URL complète de votre événement Cal.com</p>
-                <p>• Format: <code className="bg-background px-2 py-1 rounded border font-mono">https://cal.com/votre-nom/votre-événement</code></p>
-                <p>• Les informations du contact seront automatiquement ajoutées :</p>
-                <div className="grid grid-cols-1 gap-1 ml-4">
-                  <code className="bg-background px-2 py-1 rounded border text-xs font-mono">name (nom du contact)</code>
-                  <code className="bg-background px-2 py-1 rounded border text-xs font-mono">email (email du contact)</code>
-                  <code className="bg-background px-2 py-1 rounded border text-xs font-mono">smsReminderNumber (téléphone)</code>
-                </div>
+          <div className="bg-blue-50/50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-start gap-3">
+              <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  Comment configurer votre URL Cal.com
+                </p>
+                <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                  <li>• Connectez-vous à votre compte Cal.com</li>
+                  <li>• Allez dans "Event Types" et sélectionnez votre événement</li>
+                  <li>• Copiez l'URL de votre événement</li>
+                  <li>• Ajoutez "?overlayCalendar=true" à la fin pour l'ouverture en overlay</li>
+                </ul>
               </div>
             </div>
           </div>
-
-          {/* Aperçu de l'URL finale */}
-          {localCalcomUrl && (
-            <div className="bg-muted/50 rounded-lg p-4 border">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-medium">Aperçu</span>
-              </div>
-              <div className="text-xs font-mono text-muted-foreground break-all">
-                {localCalcomUrl}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Cette URL sera utilisée lors du clic sur le bouton "Cal.com" du ruban
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
@@ -691,7 +657,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
           </div>
 
           {/* Variables disponibles */}
-          <div className="bg-muted/50 rounded-lg p-4 border">
+          <div className="bg-muted/50 p-4 rounded-lg border">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Settings className="w-4 h-4 text-muted-foreground" />
@@ -700,38 +666,12 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <code className="bg-background px-2 py-1 rounded border text-xs">{'{civilite}'}</code>
                 <code className="bg-background px-2 py-1 rounded border text-xs">{'{nom}'}</code>
-                <code className="bg-background px-2 py-1 rounded border text-xs">{'{prenom}'}</code>
-                <code className="bg-background px-2 py-1 rounded border text-xs">{'{nom_complet}'}</code>
+                <code className="bg-background px-2 py-1 rounded border text-xs">{'{signature}'}</code>
+                <code className="bg-background px-2 py-1 rounded border text-xs">{'{rdv}'}</code>
               </div>
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <p>• <strong>{'{civilite}'}</strong> : "Monsieur" ou "Madame" selon le choix dans le menu</p>
-                <p>• <strong>{'{nom}'}</strong> : Nom de famille du contact</p>
-                <p>• <strong>{'{prenom}'}</strong> : Prénom du contact</p>
-                <p>• <strong>{'{nom_complet}'}</strong> : Prénom + Nom du contact</p>
-              </div>
+              <p className="text-xs text-muted-foreground">Ces variables seront automatiquement remplacées par les informations du contact</p>
             </div>
           </div>
-
-          {/* Aperçu avec exemple */}
-          {localSmsTemplate && (
-            <div className="bg-muted/50 rounded-lg p-4 border">
-              <div className="flex items-center gap-2 mb-3">
-                <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Aperçu avec exemple</span>
-              </div>
-              <div className="bg-background rounded-lg p-3 border text-xs font-mono whitespace-pre-wrap">
-                {localSmsTemplate
-                  .replace(/{civilite}/g, 'Madame')
-                  .replace(/{nom}/g, 'Dupont')
-                  .replace(/{prenom}/g, 'Marie')
-                  .replace(/{nom_complet}/g, 'Marie Dupont')
-                }
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Exemple avec : Civilité "Madame", Prénom "Marie", Nom "Dupont"
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
@@ -778,73 +718,91 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     </Card>
   );
 
-  const renderShortcutSettings = () => {
-    const availableStatuses = Object.values(ContactStatus);
-
-    return (
+  const renderShortcutSettings = () => (
+    <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Raccourcis Clavier</CardTitle>
-          <CardDescription>
-            Configurez les actions pour les touches de fonction F1 à F10.
-            Les changements sont sauvegardés lorsque vous cliquez sur "Sauvegarder".
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+              <Keyboard className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Configuration des Raccourcis</CardTitle>
+              <CardDescription>Personnalisez les touches de fonction F2-F10 pour changer rapidement le statut des contacts</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-md">
-            <div className="divide-y">
-              {/* F1 - Action d'appel fixe */}
-              <div className="flex items-center justify-between p-3 bg-blue-50/50 dark:bg-blue-900/20">
+          <div className="space-y-4">
+            {shortcuts.map((shortcut) => (
+              <div key={shortcut.key} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="font-mono text-sm bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300 rounded-md h-8 w-8 flex items-center justify-center border border-blue-300 dark:border-blue-600">
-                    F1
-                  </div>
-                  <span className="font-medium">📞 Appeler le contact sélectionné</span>
+                  <Badge variant="outline" className="font-mono">
+                    {shortcut.key}
+                  </Badge>
+                  <span className="font-medium">{shortcut.label}</span>
                 </div>
-                
-                <Badge variant="outline" className="text-xs text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-600">
-                  Fonction fixe
-                </Badge>
+                <Select
+                  value={shortcut.status}
+                  onValueChange={(value) => handleShortcutChange(shortcut.key, value as ContactStatus)}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(ContactStatus).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {getStatusLabel(status)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              
-              {shortcuts.map((shortcut) => (
-                <div key={shortcut.key} className="flex items-center justify-between p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="font-mono text-sm bg-muted text-muted-foreground rounded-md h-8 w-8 flex items-center justify-center border">
-                      {shortcut.key}
-                    </div>
-                    <span>{shortcut.label}</span>
-                  </div>
-                  
-                  <Select
-                    value={shortcut.status}
-                    onValueChange={(value) => handleShortcutChange(shortcut.key, value as ContactStatus)}
-                  >
-                    <SelectTrigger className="w-auto md:w-48">
-                      <SelectValue>
-                        <Badge className={cn("text-xs font-normal border", getStatusColor(shortcut.status))}>
-                          {getStatusLabel(shortcut.status)}
-                        </Badge>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableStatuses.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          <Badge className={cn("text-xs font-normal border", getStatusColor(status))}>
-                            {getStatusLabel(status)}
-                          </Badge>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
+            ))}
+            
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                {shortcuts.length} raccourci(s) configuré(s)
+              </div>
+              <Button variant="outline" size="sm" onClick={handleShortcutsReset}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Remettre par défaut
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
-    );
-  };
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Comment utiliser les raccourcis</CardTitle>
+          <CardDescription>
+            Instructions pour utiliser les touches de fonction
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+              <span>Appuyez sur <strong>F2-F10</strong> pour changer le statut du contact sélectionné</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+              <span>Le statut sera appliqué immédiatement sans confirmation</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+              <span>Un indicateur visuel apparaîtra pour confirmer l'action</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+              <span>Les raccourcis fonctionnent même si la fenêtre n'est pas active</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   const renderColumnSettings = () => (
     <div className="space-y-6">
@@ -972,96 +930,95 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     }
   };
 
+  const getCategoryLabel = (category: SettingsCategory): string => {
+    const categoryInfo = categories.find(cat => cat.id === category);
+    return categoryInfo?.label || 'Réglages';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent showCloseButton={false} className="max-w-7xl h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="p-4 border-b flex-row items-center justify-between">
-          <DialogTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Réglages de l'application
-          </DialogTitle>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-muted">
-            <X className="w-5 h-5" />
-          </button>
-        </DialogHeader>
-
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar de navigation */}
-          <div className="w-64 border-r bg-muted/30 p-4 flex-shrink-0">
-            <div className="pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md bg-foreground/10 flex items-center justify-center">
-                  <Settings className="w-4 h-4" />
-                </div>
-                <span className="font-semibold">Réglages</span>
-              </div>
-            </div>
-            <nav className="space-y-1">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveCategory(category.id)}
-                  className={cn(
-                    "w-full text-left rounded-md transition-colors",
-                    activeCategory === category.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  <div className="flex items-center gap-3 p-3">
-                    <category.icon className={cn("w-4 h-4", activeCategory !== category.id && "text-muted-foreground")} aria-hidden="true" />
-                    <div>
-                      <div className="text-sm font-medium">{category.label}</div>
-                      <div className={cn("text-xs", activeCategory === category.id ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                        {category.description}
-                      </div>
-                    </div>
+      <DialogContent className="overflow-hidden p-0 max-w-7xl h-[90vh]">
+        <DialogTitle className="sr-only">Réglages de l'application</DialogTitle>
+        <DialogDescription className="sr-only">
+          Personnalisez vos paramètres d'application.
+        </DialogDescription>
+        <SidebarProvider className="items-start">
+          <Sidebar collapsible="none" className="hidden md:flex">
+            <SidebarContent>
+              <SidebarHeader className="border-b px-2 py-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-md bg-foreground/10 flex items-center justify-center">
+                    <Settings className="w-4 h-4" />
                   </div>
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Contenu principal */}
-          <div className="flex-1 p-6 overflow-y-auto">
-            {renderCategory()}
-          </div>
-        </div>
-        
-        {/* Pied de page avec boutons */}
-        <div className="p-4 border-t flex justify-end gap-3 bg-muted/30">
-          <Button variant="ghost" onClick={handleReset}>Réinitialiser les changements</Button>
-          <Button onClick={handleSave} disabled={!hasChanges}>
-            <Save className="w-4 h-4 mr-2" />
-            Sauvegarder et Fermer
-          </Button>
-        </div>
+                  <span className="font-semibold">Réglages</span>
+                </div>
+              </SidebarHeader>
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {categories.map((category) => (
+                      <SidebarMenuItem key={category.id}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={activeCategory === category.id}
+                          onClick={() => setActiveCategory(category.id)}
+                        >
+                          <button className="w-full text-left">
+                            <category.icon />
+                            <span>{category.label}</span>
+                          </button>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
+          <main className="flex h-[90vh] flex-1 flex-col overflow-hidden">
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+              <div className="flex items-center gap-2">
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem className="hidden md:block">
+                      <BreadcrumbLink href="#">Réglages</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{getCategoryLabel(activeCategory)}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                {hasChanges && (
+                  <Badge variant="outline" className="text-xs">
+                    Non sauvegardé
+                  </Badge>
+                )}
+              </div>
+            </header>
+            <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6 pt-4">
+              {renderCategory()}
+            </div>
+            <div className="p-4 border-t flex justify-end gap-3 bg-muted/30">
+              <Button variant="ghost" onClick={handleReset}>
+                <Undo className="w-4 h-4 mr-2" />
+                Réinitialiser les changements
+              </Button>
+              <Button onClick={handleSave} disabled={!hasChanges}>
+                <Save className="w-4 h-4 mr-2" />
+                Sauvegarder et Fermer
+              </Button>
+            </div>
+          </main>
+        </SidebarProvider>
       </DialogContent>
     </Dialog>
   );
 };
 
-// Fonction utilitaire pour récupérer les templates sauvegardés
-export const getSavedEmailTemplates = (): { templates: EmailTemplates; signature: string } => {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      const data = JSON.parse(saved);
-      return {
-        templates: data.templates || defaultTemplates,
-        signature: data.signature || ''
-      };
-    } catch (error) {
-      console.error('Erreur lors du chargement des templates:', error);
-    }
-  }
-  return {
-    templates: defaultTemplates,
-    signature: ''
-  };
-};
-
-// Fonction utilitaire pour récupérer la configuration des colonnes sauvegardée
+// Fonction utilitaire pour récupérer la configuration des colonnes
 export const getSavedColumnConfig = (): Record<string, boolean> => {
   const saved = localStorage.getItem(COLUMNS_STORAGE_KEY);
   if (saved) {
@@ -1072,7 +1029,7 @@ export const getSavedColumnConfig = (): Record<string, boolean> => {
     }
   }
   
-  // Retourner la config par défaut
+  // Retourner la config par défaut si rien n'est sauvegardé
   const defaultConfig: Record<string, boolean> = {};
   Object.keys(DEFAULT_COLUMN_CONFIG).forEach(column => {
     defaultConfig[column] = DEFAULT_COLUMN_CONFIG[column as keyof typeof DEFAULT_COLUMN_CONFIG].isEssential;

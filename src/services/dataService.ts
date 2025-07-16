@@ -914,3 +914,95 @@ export const getImportedTableMetadata = (): {
   }
 };
 
+/**
+ * Génère une URL Google Calendar pour créer un événement de rappel
+ * @param contact - Le contact pour lequel créer le rappel
+ * @param date - La date du rappel (YYYY-MM-DD)
+ * @param time - L'heure du rappel (HH:mm)
+ * @param isRendezVous - Si true, génère un titre de rendez-vous au lieu de rappel
+ * @returns L'URL Google Calendar pré-remplie
+ */
+export function generateGoogleCalendarUrl(contact: Contact, date: string, time: string, isRendezVous: boolean = false): string {
+  // Formater la date et l'heure pour Google Calendar
+  const dateTime = new Date(`${date}T${time}`);
+  const endDateTime = new Date(dateTime.getTime() + 30 * 60 * 1000); // +30 minutes
+  
+  // Formater les dates pour Google Calendar (format ISO)
+  const startDate = dateTime.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const endDate = endDateTime.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  
+  // Construire le titre de l'événement
+  const eventTitle = isRendezVous 
+    ? `Rendez-vous - ${contact.prenom} ${contact.nom}`
+    : `Rappeler - ${contact.prenom} ${contact.nom}`;
+  
+  // Construire la description avec toutes les informations du contact
+  const contactInfo: string[] = [];
+  
+  if (contact.telephone) {
+    contactInfo.push(`📞 Téléphone: ${contact.telephone}`);
+  }
+  
+  if (contact.email) {
+    contactInfo.push(`📧 Email: ${contact.email}`);
+  }
+  
+  if (contact.source) {
+    contactInfo.push(`📋 Source: ${contact.source}`);
+  }
+  
+  if (contact.statut) {
+    contactInfo.push(`🏷️ Statut: ${contact.statut}`);
+  }
+  
+  if (contact.commentaire) {
+    contactInfo.push(`💬 Commentaire: ${contact.commentaire}`);
+  }
+  
+  if (contact.sexe) {
+    contactInfo.push(`👤 Sexe: ${contact.sexe}`);
+  }
+  
+  if (contact.don) {
+    contactInfo.push(`💰 Don: ${contact.don}`);
+  }
+  
+  if (contact.qualite) {
+    contactInfo.push(`⭐ Qualité: ${contact.qualite}`);
+  }
+  
+  if (contact.type) {
+    contactInfo.push(`📝 Type: ${contact.type}`);
+  }
+  
+  if (contact.statutAppel) {
+    contactInfo.push(`📞 Statut appel: ${contact.statutAppel}`);
+  }
+  
+  if (contact.statutRDV) {
+    contactInfo.push(`📅 Statut RDV: ${contact.statutRDV}`);
+  }
+  
+  if (contact.commentaireRDV) {
+    contactInfo.push(`📝 Commentaire RDV: ${contact.commentaireRDV}`);
+  }
+  
+  const eventType = isRendezVous ? 'Rendez-vous' : 'Rappeler';
+  const description = contactInfo.length > 0 
+    ? `${eventType} avec ${contact.prenom} ${contact.nom}\n\nInformations du contact:\n${contactInfo.join('\n')}`
+    : `${eventType} avec ${contact.prenom} ${contact.nom}`;
+  
+  // Construire l'URL Google Calendar
+  const baseUrl = 'https://calendar.google.com/calendar/render';
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: eventTitle,
+    dates: `${startDate}/${endDate}`,
+    details: description,
+    sf: 'true',
+    output: 'xml'
+  });
+  
+  return `${baseUrl}?${params.toString()}`;
+}
+

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Contact, Theme, EmailType, Civility, QualificationStatutMarital, QualificationSituationPro } from '../types';
 import { Button, Input, Select, Modal } from './Common';
-import { generateGmailComposeUrl } from '../services/dataService';
+import { generateGmailComposeUrl, generateGoogleCalendarUrl } from '../services/dataService';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -233,7 +233,14 @@ const RappelDialog: React.FC<RappelDialogProps> = ({ isOpen, onClose, contact, o
   const [time, setTime] = useState(contact?.heureRappel || '');
 
   const handleSave = () => {
+    // Sauvegarder le rappel
     onSave(date, time);
+    
+    // Générer et ouvrir l'URL Google Calendar
+    if (date && time) {
+      const calendarUrl = generateGoogleCalendarUrl(contact, date, time, false); // false pour rappel
+      window.open(calendarUrl, '_blank');
+    }
   };
 
   return (
@@ -267,7 +274,14 @@ const RendezVousDialog: React.FC<RendezVousDialogProps> = ({ isOpen, onClose, co
   const [time, setTime] = useState(contact?.heureRDV || '');
 
   const handleSave = () => {
+    // Sauvegarder le rendez-vous
     onSave(date, time);
+    
+    // Générer et ouvrir l'URL Google Calendar
+    if (date && time) {
+      const calendarUrl = generateGoogleCalendarUrl(contact, date, time, true); // true pour rendez-vous
+      window.open(calendarUrl, '_blank');
+    }
   };
 
   return (

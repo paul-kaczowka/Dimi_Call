@@ -24,6 +24,7 @@ import {
 import { cn, filterAndJoin } from '@/lib/utils';
 // import { AdbStatusBadge } from '@/components/ui/AdbStatusBadge'; // Supprimé
 import type { Contact } from '@/lib/schemas/contact';
+import { generateGoogleCalendarUrl } from '@/lib/actions-utils';
 // import { MinimalDatePicker } from '@/components/ui/MinimalDatePicker'; // Supprimé
 import {
   Dialog,
@@ -957,6 +958,14 @@ Dimitri MOREL - Arcanis Conseil`;
     onRappelDateTimeSelected(rappelDateTime);
     setIsRappelPopoverOpen(false);
     toast.success(`Rappel programmé pour le ${format(rappelDateTime, 'dd/MM/yyyy HH:mm')}`);
+    
+    // Générer et ouvrir l'URL Google Calendar
+    if (activeContact) {
+      const formattedDate = format(rappelDateTime, 'yyyy-MM-dd');
+      const formattedTime = format(rappelDateTime, 'HH:mm');
+      const calendarUrl = generateGoogleCalendarUrl(activeContact, formattedDate, formattedTime, false);
+      window.open(calendarUrl, '_blank');
+    }
   };
 
   // Fonction utilitaire pour le rendu de bulles d'infos
@@ -1091,14 +1100,48 @@ Dimitri MOREL - Arcanis Conseil`;
           </PopoverContent>
         </Popover>
 
-        <RibbonButton
-          label="Rendez-vous"
-          icon={CalendarDays}
-          onClick={handleCalComRendezVous}
-          disabled={!activeContact || isImportPending}
-          tooltipContent="Prendre un rendez-vous (Cal.com)"
-          className="flex-1 sm:flex-initial"
-        />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(buttonVariants({ variant: 'ghost', size: 'lg' }), "flex-1 sm:flex-initial flex-col h-auto p-2 min-w-[70px] data-[state=open]:bg-accent data-[state=open]:text-accent-foreground")}
+              disabled={!activeContact || isImportPending}
+              type="button"
+              aria-label="Rendez-vous"
+            >
+              <div className="flex flex-col items-center justify-center h-full">
+                <CalendarDays className="h-5 w-5 mb-1" />
+                <span className="text-xs">Rendez-vous</span>
+              </div>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-4 space-y-2" align="start">
+            <p className="text-sm font-medium">Choisir le type de rendez-vous</p>
+            <Button 
+              onClick={handleCalComRendezVous} 
+              className="w-full justify-start"
+              variant="outline"
+            >
+              📅 Cal.com (Recommandé)
+            </Button>
+            <Button 
+              onClick={() => {
+                if (activeContact) {
+                  const now = new Date();
+                  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                  const formattedDate = format(tomorrow, 'yyyy-MM-dd');
+                  const formattedTime = format(now, 'HH:mm');
+                  const calendarUrl = generateGoogleCalendarUrl(activeContact, formattedDate, formattedTime, true);
+                  window.open(calendarUrl, '_blank');
+                }
+              }} 
+              className="w-full justify-start"
+              variant="outline"
+            >
+              📆 Google Calendar
+            </Button>
+          </PopoverContent>
+        </Popover>
 
         <RibbonButton 
           label="Qualification"

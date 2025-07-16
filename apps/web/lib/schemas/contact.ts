@@ -35,7 +35,7 @@ export interface QualificationData {
   commentaire: string;
 }
 
-export const contactSchema = z.object({
+export const contactSchema = z.strictObject({
   id: z.string().uuid().optional(),
   firstName: z.string().min(1, "Le prénom est requis"),
   lastName: z.string().min(1, "Le nom de famille est requis"),
@@ -79,7 +79,7 @@ export const contactSchema = z.object({
   role: zStringOptional,
   bookingDate: zStringOptional,
   bookingTime: zStringOptional,
-}).strict();
+});
 
 export const contactsSchema = z.array(contactSchema);
 

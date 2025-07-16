@@ -22,8 +22,8 @@ export function useSmsAction() {
       // Afficher les commandes ADB à exécuter manuellement pour aider l'utilisateur
       console.info('Si l\'ouverture automatique ne fonctionne pas, exécutez l\'une de ces commandes dans un terminal:');
       
-      // Commande ADB 1 : Intent SENDTO avec extra sms_body
-      const escapedMessage = message.replace(/"/g, '\\"').replace(/'/g, "\\'");
+      // Commande ADB 1 : Intent SENDTO avec extra sms_body (doubler les apostrophes)
+      const escapedMessage = message.replace(/"/g, '\\"').replace(/'/g, "''");
       console.info(`Méthode 1 : adb shell am start -a android.intent.action.SENDTO -d sms:${cleanedPhoneNumber} --es sms_body "${escapedMessage}"`);
       
       // Commande ADB 2 : Intent VIEW avec paramètre body dans l'URI

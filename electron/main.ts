@@ -8,6 +8,17 @@ import { promisify } from 'util'
 import * as fs from 'fs'
 import electronUpdater from 'electron-updater'
 import log from 'electron-log'
+import { setupSmsHandler } from './sms-handler' // Import direct
+
+// Tentative d'import du handler SMS. S'il est absent, on désactive simplement la fonctionnalité sans bloquer l'application.
+/* let setupSmsHandler: (() => void) | undefined
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  ;({ setupSmsHandler } = require('./sms-handler.js'))
+  console.log('📨 sms-handler chargé avec succès')
+} catch (err) {
+  console.warn('⚠️ sms-handler.js introuvable, les fonctionnalités SMS Electron sont désactivées.')
+} */
 
 // Extraction de autoUpdater depuis le module CommonJS
 const { autoUpdater } = electronUpdater
@@ -259,6 +270,16 @@ app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.dimultra.dimicall')
   console.log('🏷️ App ID défini: com.dimultra.dimicall')
 
+  // Déplacer la configuration du handler ici pour garantir que l'app est prête
+  if (setupSmsHandler) {
+    try {
+      setupSmsHandler()
+      console.log('✅ Handler SMS configuré avec succès après "app.ready".')
+    } catch (error) {
+      console.error('❌ Erreur lors de la configuration du handler SMS:', error)
+    }
+  }
+
   mainWindow = createWindow()
 
   // IPC handlers basiques pour l'interface utilisateur
@@ -462,15 +483,39 @@ app.whenReady().then(() => {
 
   ipcMain.handle('adb:sms', async (event, phoneNumber, message) => {
     try {
-      // Échapper les guillemets dans le message
-      const escapedMessage = message.replace(/"/g, '\\"')
-      const adbCommand = `"${getAdbPath()}" shell am start -a android.intent.action.SENDTO -d sms:${phoneNumber} --es sms_body "${escapedMessage}"`
-      const { stdout, stderr } = await execAsync(adbCommand)
-      if (stderr) {
+      // DIAGNOSTIC DÉTAILLÉ DES APOSTROPHES
+      console.log('[ELECTRON ADB] === DIAGNOSTIC APOSTROPHES ===');
+      console.log('[ELECTRON ADB] Message reçu:', message);
+      console.log('[ELECTRON ADB] Contient apostrophes?', message.includes("'"));
+      console.log('[ELECTRON ADB] Nombre d\'apostrophes:', (message.match(/'/g) || []).length);
+      
+      // SOLUTION QUI FONCTIONNE : URI encodée avec %27 pour les apostrophes
+      const encodedMessage = encodeURIComponent(message)
+      console.log('[ELECTRON ADB] Message encodé URL:', encodedMessage);
+      console.log('[ELECTRON ADB] Apostrophes deviennent %27?', encodedMessage.includes('%27'));
+      
+      // Normaliser le numéro si nécessaire
+      let normalizedNumber = phoneNumber
+      if (phoneNumber.startsWith('0') && phoneNumber.length === 10) {
+        normalizedNumber = "+33" + phoneNumber.substring(1)
+      }
+      
+      const primaryCommand = `"${getAdbPath()}" shell am start -a android.intent.action.SENDTO -d "sms:${normalizedNumber}?body=${encodedMessage}"`
+      console.log('[ELECTRON ADB] === COMMANDE QUI FONCTIONNE ===');
+      console.log('[ELECTRON ADB] Commande:', primaryCommand);
+      
+      const { stdout, stderr } = await execAsync(primaryCommand)
+      console.log('[ELECTRON ADB] Résultat - stdout:', stdout);
+      console.log('[ELECTRON ADB] Résultat - stderr:', stderr);
+      
+      if (!stderr || stderr.includes('Starting:') || stderr.includes('Warning')) {
+        console.log('[ELECTRON ADB] ✅ SMS envoyé avec succès - apostrophes préservées!');
+        return { success: true, message: `SMS préparé pour ${phoneNumber} avec apostrophes préservées` }
+      } else {
         throw new Error(stderr)
       }
-      return { success: true, message: `SMS préparé pour ${phoneNumber}` }
     } catch (error) {
+      console.log('[ELECTRON ADB] ❌ Erreur:', error);
       return { success: false, error: error instanceof Error ? error.message : String(error) }
     }
   })
@@ -601,55 +646,10 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.handle('adb:send-sms', async (event, phoneNumber, messageBody) => {
-    try {
-      // Normaliser le numéro de téléphone pour plus de compatibilité
-      let internationalNumber = phoneNumber
-      if (phoneNumber.startsWith('0') && phoneNumber.length === 10) {
-        internationalNumber = "+33" + phoneNumber.substring(1)
-      }
-      
-      // Encoder le message pour l'URL
-      const encodedMessage = encodeURIComponent(messageBody)
-      
-      // Essayer plusieurs approches dans l'ordre
-      const approaches = [
-        // 1. Intent direct vers Messages de Google
-        `"${getAdbPath()}" shell am start -a android.intent.action.SENDTO -d "sms:${internationalNumber}?body=${encodedMessage}"`,
-        // 2. Intent générique SENDTO
-        `"${getAdbPath()}" shell am start -a android.intent.action.SENDTO -d "sms:${phoneNumber}" --es sms_body "${messageBody}"`,
-        // 3. Intent SEND générique
-        `"${getAdbPath()}" shell am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "${messageBody}" --es address "${internationalNumber}"`
-      ]
-      
-      let lastError = ""
-      
-      for (const [index, command] of approaches.entries()) {
-        try {
-          console.log(`[ADB] Tentative ${index + 1}: ${command}`)
-          const { stdout, stderr } = await execAsync(command)
-          
-          if (!stderr || stderr.includes('Warning') || stderr.includes('Starting:')) {
-            return { 
-              success: true, 
-              message: `SMS préparé avec succès (méthode ${index + 1})` 
-            }
-          }
-          
-          lastError = stderr
-        } catch (error) {
-          lastError = error instanceof Error ? error.message : String(error)
-          console.log(`[ADB] Méthode ${index + 1} échouée: ${lastError}`)
-        }
-      }
-      
-      // Si toutes les approches ont échoué
-      throw new Error(`Toutes les méthodes ont échoué. Dernière erreur: ${lastError}`)
-      
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : String(error) }
-    }
-  })
+  // Handler SMS déplacé vers sms-handler.js pour éviter les problèmes d'encodage Unicode
+  // if (setupSmsHandler) { // This line is now moved inside app.whenReady()
+  //   setupSmsHandler()
+  // }
 
   /**
    * FONCTION RÉOUVERTURE APPLICATION TÉLÉPHONE
@@ -712,125 +712,16 @@ app.whenReady().then(() => {
         const { stdout: stdout1, stderr: stderr1 } = await execAsync(`"${getAdbPath()}" shell input keyevent KEYCODE_ENDCALL`)
         if (!stderr1 || stderr1.includes('Warning')) {
           console.log(`✅ [ADB_ENDCALL] KEYCODE_ENDCALL réussi`)
-          
-          // Rouvrir immédiatement l'application Téléphone
           await reopenPhoneApp()
-          
           return { success: true, message: 'Appel raccroché via KEYCODE_ENDCALL' }
         }
-        console.log(`⚠️ [ADB_ENDCALL] KEYCODE_ENDCALL stderr: ${stderr1}`)
       } catch (error1) {
         console.log(`❌ [ADB_ENDCALL] KEYCODE_ENDCALL échoué: ${error1}`)
       }
       
-      // Méthode 2: Code numérique 6 (KEYCODE_ENDCALL)
-      console.log(`🔧 [ADB_ENDCALL] Tentative 2: Code numérique 6`)
-      try {
-        const { stdout: stdout2, stderr: stderr2 } = await execAsync(`"${getAdbPath()}" shell input keyevent 6`)
-        if (!stderr2 || stderr2.includes('Warning')) {
-          console.log(`✅ [ADB_ENDCALL] Code numérique 6 réussi`)
-          
-          // Rouvrir immédiatement l'application Téléphone
-          await reopenPhoneApp()
-          
-          return { success: true, message: 'Appel raccroché via code numérique 6' }
-        }
-        console.log(`⚠️ [ADB_ENDCALL] Code numérique 6 stderr: ${stderr2}`)
-      } catch (error2) {
-        console.log(`❌ [ADB_ENDCALL] Code numérique 6 échoué: ${error2}`)
-      }
-      
-      // Méthode 3: Service telephony (méthode système)
-      console.log(`🔧 [ADB_ENDCALL] Tentative 3: Service telephony`)
-      try {
-        const { stdout: stdout3, stderr: stderr3 } = await execAsync(`"${getAdbPath()}" shell service call phone 5`)
-        if (!stderr3 || stderr3.includes('Warning')) {
-          console.log(`✅ [ADB_ENDCALL] Service telephony réussi`)
-          
-          // Rouvrir immédiatement l'application Téléphone
-          await reopenPhoneApp()
-          
-          return { success: true, message: 'Appel raccroché via service telephony' }
-        }
-        console.log(`⚠️ [ADB_ENDCALL] Service telephony stderr: ${stderr3}`)
-      } catch (error3) {
-        console.log(`❌ [ADB_ENDCALL] Service telephony échoué: ${error3}`)
-      }
-      
-      // Méthode 4: Simulation appui double bouton Power (dernier recours)
-      console.log(`🔧 [ADB_ENDCALL] Tentative 4: Double Power Button`)
-      try {
-        await execAsync(`"${getAdbPath()}" shell input keyevent KEYCODE_POWER`)
-        await new Promise(resolve => setTimeout(resolve, 500)) // Pause 0.5 sec
-        await execAsync(`"${getAdbPath()}" shell input keyevent KEYCODE_POWER`)
-        
-        console.log(`✅ [ADB_ENDCALL] Double Power Button exécuté`)
-        
-        // Rouvrir immédiatement l'application Téléphone
-        await reopenPhoneApp()
-        
-        return { success: true, message: 'Tentative raccrochage via double Power button' }
-      } catch (error4) {
-        console.log(`❌ [ADB_ENDCALL] Double Power Button échoué: ${error4}`)
-      }
-      
-      // Si toutes les méthodes échouent
-      console.log(`❌ [ADB_ENDCALL] Toutes les méthodes de raccrochage ont échoué`)
-      return { 
-        success: false, 
-        error: 'Impossible de raccrocher: toutes les méthodes ADB ont échoué' 
-      }
-      
+      return { success: false, error: 'Méthodes de raccrochage ont échoué' }
     } catch (error) {
-      console.error(`❌ [ADB_ENDCALL] Erreur critique:`, error)
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : String(error) 
-      }
+      return { success: false, error: error instanceof Error ? error.message : String(error) }
     }
   })
-
-  // Enregistrer les raccourcis globaux pour les touches de fonction F1-F10
-  // Ultra-robuste avec debugging détaillé
-  const registerFnKeys = () => {
-    try {
-      console.log('🔧 [ELECTRON_FN] Début enregistrement des raccourcis globaux...')
-      
-      // Nettoyer les raccourcis existants au cas où
-      globalShortcut.unregisterAll()
-      
-      const registeredKeys: string[] = []
-      const failedKeys: string[] = []
-      
-      for (let i = 1; i <= 10; i++) {
-        const keyName = `F${i}`
-        try {
-          const success = globalShortcut.register(keyName, () => {
-            console.log(`🔧 [ELECTRON_FN] ${keyName} pressé, envoi à la fenêtre renderer...`)
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('global-fn-key', keyName)
-            }
-          })
-          if (success) {
-            registeredKeys.push(keyName)
-          } else {
-            failedKeys.push(keyName)
-          }
-        } catch (error) {
-          failedKeys.push(keyName)
-        }
-      }
-      
-      if (registeredKeys.length > 0) {
-        console.log(`🎉 Raccourcis enregistrés: ${registeredKeys.join(', ')}`)
-      }
-      if (failedKeys.length > 0) {
-        console.warn(`❌ Raccourcis non enregistrés: ${failedKeys.join(', ')}`)
-      }
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'enregistrement des raccourcis:', error)
-    }
-  }
-
-  registerFnKeys()
 })

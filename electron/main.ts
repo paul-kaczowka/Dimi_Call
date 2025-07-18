@@ -27,13 +27,18 @@ let updateDownloaded = false
 let mainWindow: BrowserWindow | null = null
 
 // Configuration de l'auto-updater
+// Désactiver l'installation automatique ; l'utilisateur doit confirmer l'installation
+autoUpdater.autoInstallOnAppQuit = false
+// Laisser le téléchargement automatique en arrière-plan
+autoUpdater.autoDownload = true
+
 if (!is.dev) {
-  // Configuration explicite pour éviter les problèmes
-  autoUpdater.checkForUpdatesAndNotify()
+  // Vérifier et télécharger les mises à jour en arrière-plan (pas d'installation auto)
+  autoUpdater.checkForUpdates()
   
   // Vérifier les mises à jour toutes les 10 minutes
   setInterval(() => {
-    autoUpdater.checkForUpdatesAndNotify()
+    autoUpdater.checkForUpdates()
   }, 10 * 60 * 1000)
 }
 
